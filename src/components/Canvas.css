@@ -1,0 +1,50 @@
+.canvas-wrapper {
+  position: relative;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.canvas-wrapper canvas {
+  display: block;
+  cursor: crosshair;
+}
+
+.canvas-wrapper .canvas-container {
+  margin: 0 auto;
+}
+
+/* Custom canvas styles */
+.canvas-wrapper .canvas-container {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+/* Selection styles */
+.canvas-wrapper .canvas-container .canvas-selection-box {
+  border: 2px solid #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Object controls styling */
+.canvas-wrapper .canvas-container .corner-bounding-box {
+  border: 2px dashed #3b82f6;
+}
+
+.canvas-wrapper .canvas-container .corner {
+  background-color: #3b82f6;
+  border: 2px solid white;
+  border-radius: 4px;
+}
+
+.canvas-wrapper .canvas-container .corner.mtr {
+  background-color: #10b981;
+}
+
+/* Responsive canvas */
+@media (max-width: 768px) {
+  .canvas-wrapper {
+    max-width: 100%;
+  }
+}

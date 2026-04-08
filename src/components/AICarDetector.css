@@ -1,0 +1,214 @@
+.ai-car-detector {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  color: white;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.detector-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.detector-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.detect-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #42e695 0%, #3bb2b8 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(66, 230, 149, 0.3);
+}
+
+.detect-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 230, 149, 0.4);
+}
+
+.detect-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.detect-btn.detecting {
+  background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+  animation: pulse 1.5s infinite;
+}
+
+.clear-btn {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.clear-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.detection-progress {
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #42e695 0%, #3bb2b8 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(66, 230, 149, 0.5);
+}
+
+.progress-text {
+  font-size: 13px;
+  margin: 0;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.detected-parts {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.parts-summary {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #4ade80;
+}
+
+.parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detected-part-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.part-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.part-name {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.confidence {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.detected-part-item.small-part {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.small-badge {
+  font-size: 10px;
+  background: rgba(255, 215, 0, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.detector-info {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.info-text {
+  font-size: 12px;
+  margin: 4px 0;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 8px rgba(255, 167, 38, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(255, 167, 38, 0.6);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(255, 167, 38, 0.3);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .detector-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .detector-actions {
+    justify-content: center;
+  }
+  
+  .detect-btn, .clear-btn {
+    flex: 1;
+    text-align: center;
+  }
+}

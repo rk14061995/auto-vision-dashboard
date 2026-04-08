@@ -1,0 +1,85 @@
+.magic-wand {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: white;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.magic-wand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.magic-wand-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.magic-wand-toggle {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.magic-wand-toggle.on {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.magic-wand-toggle.off {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.magic-wand-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.magic-wand-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mw-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mw-label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.mw-control input[type='range'] {
+  width: 100%;
+}
+
+.magic-wand-hint {
+  font-size: 12px;
+  margin: 8px 0 0;
+  opacity: 0.85;
+  line-height: 1.35;
+}
+
+.magic-wand-status {
+  margin-top: 10px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 10px;
+  border-radius: 8px;
+}

@@ -1,0 +1,170 @@
+.background-remover {
+  background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  color: white;
+  box-shadow: 0 4px 20px rgba(47, 128, 237, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.remover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.remover-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.remover-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.remove-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(47, 128, 237, 0.3);
+}
+
+.remove-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(47, 128, 237, 0.4);
+}
+
+.remove-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.remove-btn.removing {
+  background: linear-gradient(135deg, #FFA500 0%, #FF6347 100%);
+  animation: pulse 1.5s infinite;
+}
+
+.reset-btn {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.removal-progress {
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #56CCF2 0%, #2F80ED 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(47, 128, 237, 0.5);
+}
+
+.progress-text {
+  font-size: 13px;
+  margin: 0;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.removal-success {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.success-text {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #4ade80;
+}
+
+.success-tip {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.remover-info {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.info-text {
+  font-size: 12px;
+  margin: 4px 0;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(255, 165, 0, 0.6);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .remover-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .remover-actions {
+    justify-content: center;
+  }
+  
+  .remove-btn, .reset-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
