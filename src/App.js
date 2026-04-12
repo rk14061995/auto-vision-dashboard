@@ -1,9 +1,15 @@
-import React, { useState, useRef, useCallback } from 'react';
+
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Canvas from './components/Canvas';
 import Sidebar from './components/Sidebar';
 import AISidebar from './components/AISidebar';
 import Toolbar from './components/Toolbar';
+import AdSection from './components/AdSection';
+import Header from './components/Header';
 import './App.css';
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:3000';
 
 function App() {
   const [fabricCanvas, setFabricCanvas] = useState(null);
@@ -12,7 +18,11 @@ function App() {
   const [canvasZoom, setCanvasZoom] = useState(1);
   const fileInputRef = useRef(null);
 
-  // Memoize the callback functions to prevent infinite loops
+  const [currentProject, setCurrentProject] = useState(null);
+  const [projectLoading, setProjectLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
+  const [error, setError] = useState('');
+
   const handleSelection = useCallback((object) => {
     setSelectedObject(object);
   }, []);
@@ -21,12 +31,64 @@ function App() {
     setSelectedObject(null);
   }, []);
 
-  // Handle car part selection
   const handleCarPartSelection = useCallback((carPart) => {
     setSelectedCarPart(carPart);
   }, []);
 
-  // Handle image upload
+  // ✅ Load project
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const projectId = params.get('projectId');
+        const email = params.get('email');
+
+        console.log('DEBUG projectId:', projectId);
+        console.log('DEBUG email:', email);
+
+        if (!projectId || !email) {
+          setError('Missing project ID or email.');
+          setProjectLoading(false);
+          return;
+        }
+
+        setUserEmail(email);
+
+        const response = await axios.get(
+          `${API_BASE_URL}/api/projects/${projectId}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${email}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          setCurrentProject(response.data.project);
+        }
+      } catch (err) {
+        console.error('Error loading project:', err);
+        setError(err.response?.data?.error || 'Failed to load project.');
+      } finally {
+        setProjectLoading(false);
+      }
+    };
+
+    if (projectLoading) {
+      loadProject();
+    }
+  }, [projectLoading]);
+
+  // ✅ Load base image when canvas ready
+  // useEffect(() => {
+  //   if (currentProject?.baseImage && fabricCanvas) {
+  //     loadBaseImage(currentProject.baseImage);
+  //   }
+  // }, [currentProject, fabricCanvas]);
+
+
+  // Image upload
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file && fabricCanvas) {
@@ -41,7 +103,7 @@ function App() {
           const scaleX = canvasWidth / img.width;
           const scaleY = canvasHeight / img.height;
           const scale = Math.min(scaleX, scaleY);
-          
+
           img.set({
             scaleX: scale,
             scaleY: scale,
@@ -53,7 +115,7 @@ function App() {
             evented: false,
             excludeFromExport: false
           });
-          
+
           // Clear existing background and set new one
           canvas.clear();
           canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
@@ -148,7 +210,7 @@ function App() {
         quality: 1,
         multiplier: 2 // High quality export
       });
-      
+
       // Download the image
       const link = document.createElement('a');
       link.download = 'customized-car.png';
@@ -158,7 +220,7 @@ function App() {
       // Restore zoom
       fabricCanvas.setZoom(currentZoom);
       fabricCanvas.renderAll();
-    }
+      }
   };
 
   return (
@@ -189,7 +251,7 @@ function App() {
       {/* Main Content */}
       <div className="app-main">
         {/* Left Sidebar - Custom Tools */}
-        <Sidebar 
+        <Sidebar
           fabricCanvas={fabricCanvas}
           selectedObject={selectedObject}
           onSelectCarPart={handleCarPartSelection}
@@ -197,15 +259,15 @@ function App() {
 
         {/* Canvas Container */}
         <div className="canvas-container">
-          <Canvas
-            setFabricCanvas={setFabricCanvas}
-            onSelection={handleSelection}
-            onClearSelection={handleClearSelection}
-          />
+        <Canvas
+          setFabricCanvas={setFabricCanvas}
+          onSelection={handleSelection}
+          onClearSelection={handleClearSelection}
+        />
         </div>
 
         {/* Right Sidebar - AI Tools */}
-        <AISidebar 
+        <AISidebar
           fabricCanvas={fabricCanvas}
           selectedObject={selectedObject}
           onSelectCarPart={handleCarPartSelection}
