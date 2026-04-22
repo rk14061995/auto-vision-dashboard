@@ -1,0 +1,210 @@
+.corner-ad {
+  position: fixed;
+  width: 200px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.corner-ad:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.corner-ad--bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.corner-ad--bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.corner-ad--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  font-size: 0.9rem;
+  color: #64748b;
+  background: #f9fafb;
+}
+
+.corner-ad-content {
+  padding: 12px;
+}
+
+.corner-ad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.corner-ad-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.corner-ad-type {
+  font-size: 0.75rem;
+  color: #6366f1;
+  background: #eef2ff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.corner-ad-image {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: #e5e7eb;
+}
+
+.corner-ad-footer {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.corner-ad-contact {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .corner-ad {
+    width: 160px;
+  }
+  
+  .corner-ad--bottom-left,
+  .corner-ad--bottom-right {
+    bottom: 10px;
+  }
+  
+  .corner-ad--bottom-left {
+    left: 10px;
+  }
+  
+  .corner-ad--bottom-right {
+    right: 10px;
+  }
+  
+  .corner-ad-image {
+    height: 60px;
+  }
+  
+  .corner-ad-content {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .corner-ad {
+    width: 140px;
+  }
+  
+  .corner-ad--bottom-left,
+  .corner-ad--bottom-right {
+    bottom: 5px;
+  }
+  
+  .corner-ad--bottom-left {
+    left: 5px;
+  }
+  
+  .corner-ad--bottom-right {
+    right: 5px;
+  }
+  
+  .corner-ad-image {
+    height: 50px;
+  }
+  
+  .corner-ad-title {
+    font-size: 0.8rem;
+  }
+  
+  .corner-ad-type {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+/* Animation for ad refresh */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.corner-ad-content {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Clickable ad styles */
+.corner-ad--clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.corner-ad--clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  border-color: #6366f1;
+}
+
+.corner-ad--clickable:active {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Stats display */
+.corner-ad-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.corner-ad-views,
+.corner-ad-clicks {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.corner-ad-views::before {
+  content: " eye";
+  font-size: 0.8rem;
+}
+
+.corner-ad-clicks::before {
+  content: " hand";
+  font-size: 0.8rem;
+}

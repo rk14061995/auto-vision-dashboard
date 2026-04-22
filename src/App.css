@@ -34,6 +34,24 @@
   align-items: center;
 }
 
+.success-message {
+  background-color: #10b981;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-message {
+  background-color: #ef4444;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
 /* Main Content */
 .app-main {
   display: flex;

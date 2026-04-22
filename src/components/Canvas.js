@@ -40,6 +40,8 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection }) => {
     // Dispose existing canvas if any
     if (fabricCanvasRef.current) {
       try {
+        // Clear all objects before disposal
+        fabricCanvasRef.current.clear();
         fabricCanvasRef.current.dispose();
       } catch (error) {
         console.log('Error disposing canvas:', error);
@@ -122,6 +124,8 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection }) => {
       document.removeEventListener('keydown', handleKeyDown);
       if (fabricCanvasRef.current) {
         try {
+          // Clear canvas before disposal to prevent clearRect errors
+          fabricCanvasRef.current.clear();
           fabricCanvasRef.current.dispose();
         } catch (error) {
           console.log('Error disposing canvas:', error);
