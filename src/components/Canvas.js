@@ -1,139 +1,226 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Canvas.css';
 
-// Import fabric using the v5 method
 const { fabric } = require('fabric');
 
-const Canvas = ({ setFabricCanvas, onSelection, onClearSelection }) => {
+const MAX_HISTORY = 50;
+
+const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoReady }) => {
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const canvasDisposedRef = useRef(false);
 
-  // Initialize canvas
+  // Undo/redo state
+  const historyRef = useRef({ stack: [], index: -1 });
+  const isRestoringRef = useRef(false);
+
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Calculate responsive canvas size
     const updateCanvasSize = () => {
-      const container = canvasRef.current.parentElement;
+      const container = canvasRef.current?.parentElement;
+      if (!container) return;
       const maxWidth = container.clientWidth - 40;
       const maxHeight = container.clientHeight - 40;
-      
-      const width = Math.min(maxWidth, 800);
-      const height = Math.min(maxHeight, 600);
-      
-      setCanvasSize({ width, height });
+      setCanvasSize({
+        width: Math.min(maxWidth, 900),
+        height: Math.min(maxHeight, 650)
+      });
     };
 
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
-
-    return () => {
-      window.removeEventListener('resize', updateCanvasSize);
-    };
+    return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
 
-  // Initialize Fabric.js canvas
   useEffect(() => {
     if (!canvasRef.current || canvasSize.width === 0) return;
 
-    // Dispose existing canvas if any
+    // Dispose existing canvas
     if (fabricCanvasRef.current) {
       try {
-        // Clear all objects before disposal
+        canvasDisposedRef.current = true;
         fabricCanvasRef.current.clear();
         fabricCanvasRef.current.dispose();
-      } catch (error) {
-        console.log('Error disposing canvas:', error);
-      }
+      } catch (e) {}
       fabricCanvasRef.current = null;
     }
 
-    // Create new Fabric.js canvas
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      width: canvasSize.width,
-      height: canvasSize.height,
-      backgroundColor: '#f8f9fa',
-      selection: true,
-      preserveObjectStacking: true,
-      enableRetinaScaling: true,
-      renderOnAddRemove: true
-    });
-
-    // Canvas event handlers
-    canvas.on('selection:created', (e) => {
-      onSelection(e.selected[0]);
-    });
-
-    canvas.on('selection:updated', (e) => {
-      onSelection(e.selected[0]);
-    });
-
-    canvas.on('selection:cleared', () => {
-      onClearSelection();
-    });
-
-    // Keyboard shortcuts
     const handleKeyDown = (e) => {
-      // Delete key
+      const canvas = fabricCanvasRef.current;
+      if (!canvas) return;
+
+      // Ignore shortcuts when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const activeObject = canvas.getActiveObject();
-        if (activeObject) {
-          canvas.remove(activeObject);
+        const active = canvas.getActiveObject();
+        if (active) {
+          canvas.remove(active);
           onClearSelection();
         }
       }
-      
-      // Copy/Paste functionality (optional enhancement)
+
       if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          doUndo(canvas);
+        }
+        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          doRedo(canvas);
+        }
         if (e.key === 'c') {
-          const activeObject = canvas.getActiveObject();
-          if (activeObject) {
-            activeObject.clone((cloned) => {
-              canvas._clipboard = cloned;
-            });
+          const active = canvas.getActiveObject();
+          if (active) {
+            active.clone((cloned) => { canvas._clipboard = cloned; });
           }
         }
-        
         if (e.key === 'v') {
           if (canvas._clipboard) {
             canvas._clipboard.clone((clonedObj) => {
               canvas.discardActiveObject();
-              clonedObj.set({
-                left: clonedObj.left + 10,
-                top: clonedObj.top + 10,
-                evented: true,
-              });
+              clonedObj.set({ left: clonedObj.left + 10, top: clonedObj.top + 10, evented: true });
               canvas.add(clonedObj);
               canvas.setActiveObject(clonedObj);
               canvas.requestRenderAll();
             });
           }
         }
+        if (e.key === 'a') {
+          e.preventDefault();
+          const objs = canvas.getObjects();
+          if (objs.length > 0) {
+            const sel = new fabric.ActiveSelection(objs, { canvas });
+            canvas.setActiveObject(sel);
+            canvas.requestRenderAll();
+          }
+        }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    const initTimer = setTimeout(() => {
+      if (!canvasRef.current) return;
+      canvasDisposedRef.current = false;
 
-    // Set canvas reference
-    fabricCanvasRef.current = canvas;
-    setFabricCanvas(canvas);
+      const canvas = new fabric.Canvas(canvasRef.current, {
+        width: canvasSize.width,
+        height: canvasSize.height,
+        backgroundColor: '#f8f9fa',
+        selection: true,
+        preserveObjectStacking: true,
+        enableRetinaScaling: true,
+        renderOnAddRemove: true
+      });
 
-    // Cleanup
+      // History helpers (closures over `canvas`)
+      const saveState = () => {
+        if (isRestoringRef.current) return;
+        const objects = canvas.getObjects().map((obj) =>
+          obj.toJSON(['carPartId', 'carPartName', 'aiDetected', 'customType'])
+        );
+        const serialized = JSON.stringify(objects);
+
+        const h = historyRef.current;
+        // Truncate redo branch
+        h.stack = h.stack.slice(0, h.index + 1);
+        h.stack.push(serialized);
+        if (h.stack.length > MAX_HISTORY) {
+          h.stack.shift();
+        } else {
+          h.index++;
+        }
+      };
+
+      const restoreObjects = (serialized, canvasRef2) => {
+        const c = canvasRef2 || canvas;
+        isRestoringRef.current = true;
+        const objects = JSON.parse(serialized);
+        const backgroundImg = c.backgroundImage;
+
+        c.getObjects().forEach((obj) => c.remove(obj));
+
+        if (objects.length === 0) {
+          isRestoringRef.current = false;
+          c.requestRenderAll();
+          return;
+        }
+
+        fabric.util.enlivenObjects(objects, (enlivened) => {
+          enlivened.forEach((obj) => c.add(obj));
+          if (backgroundImg) c.setBackgroundImage(backgroundImg, () => {});
+          c.discardActiveObject();
+          c.requestRenderAll();
+          isRestoringRef.current = false;
+        });
+      };
+
+      const undo = () => {
+        const h = historyRef.current;
+        if (h.index <= 0) return;
+        h.index--;
+        restoreObjects(h.stack[h.index]);
+      };
+
+      const redo = () => {
+        const h = historyRef.current;
+        if (h.index >= h.stack.length - 1) return;
+        h.index++;
+        restoreObjects(h.stack[h.index]);
+      };
+
+      // Assign to module-level so keyboard handler can call them
+      doUndo = undo;
+      doRedo = redo;
+
+      // Save initial empty state
+      saveState();
+
+      // Canvas events
+      canvas.on('selection:created', (e) => onSelection(e.selected[0]));
+      canvas.on('selection:updated', (e) => onSelection(e.selected[0]));
+      canvas.on('selection:cleared', () => onClearSelection());
+
+      canvas.on('object:added', () => saveState());
+      canvas.on('object:removed', () => saveState());
+      canvas.on('object:modified', () => saveState());
+
+      document.addEventListener('keydown', handleKeyDown);
+
+      fabricCanvasRef.current = canvas;
+      setFabricCanvas(canvas);
+
+      // Expose undo/redo to parent
+      if (onUndoRedoReady) {
+        onUndoRedoReady({ undo, redo });
+      }
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        if (fabricCanvasRef.current) {
+          try {
+            fabricCanvasRef.current.clear();
+            fabricCanvasRef.current.dispose();
+          } catch (e) {}
+          fabricCanvasRef.current = null;
+        }
+      };
+    }, 50);
+
     return () => {
+      clearTimeout(initTimer);
       document.removeEventListener('keydown', handleKeyDown);
       if (fabricCanvasRef.current) {
         try {
-          // Clear canvas before disposal to prevent clearRect errors
+          canvasDisposedRef.current = true;
           fabricCanvasRef.current.clear();
           fabricCanvasRef.current.dispose();
-        } catch (error) {
-          console.log('Error disposing canvas:', error);
-        }
+        } catch (e) {}
         fabricCanvasRef.current = null;
       }
     };
-  }, [canvasSize, onSelection, onClearSelection]);
+  }, [canvasSize, onSelection, onClearSelection, setFabricCanvas, onUndoRedoReady]);
 
   return (
     <div className="canvas-wrapper">
@@ -141,5 +228,9 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection }) => {
     </div>
   );
 };
+
+// Module-level undo/redo refs updated on canvas init
+let doUndo = () => {};
+let doRedo = () => {};
 
 export default Canvas;

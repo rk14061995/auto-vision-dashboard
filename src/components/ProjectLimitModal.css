@@ -1,0 +1,390 @@
+.project-limit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.project-limit-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+.project-limit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.project-limit-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.project-limit-content {
+  padding: 0 24px 24px;
+}
+
+.limit-info {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.usage-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.stat-value.remaining {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.plan-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.plan-info p {
+  margin: 0;
+  color: #374151;
+}
+
+.upgrade-prompt {
+  text-align: center;
+}
+
+.upgrade-prompt h3 {
+  margin: 0 0 12px;
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.upgrade-prompt > p {
+  margin: 0 0 20px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.upgrade-benefits {
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: left;
+}
+
+.upgrade-benefits ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upgrade-benefits li {
+  padding: 4px 0;
+  color: #374151;
+  position: relative;
+  padding-left: 20px;
+}
+
+.upgrade-benefits li::before {
+  content: "check";
+  color: #10b981;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.project-limit-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.loading-plans {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.plan-card {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card--popular {
+  border-color: #10b981;
+}
+
+.plan-card--best-value {
+  border-color: #f59e0b;
+}
+
+.plan-badge {
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plan-card--best-value .plan-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.plan-header {
+  margin-bottom: 16px;
+}
+
+.plan-name {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.price-period {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.plan-projects {
+  font-size: 1.1rem;
+  color: #374151;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.plan-features li {
+  padding: 6px 0;
+  color: #374151;
+  position: relative;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+.plan-features li::before {
+  content: "check";
+  color: #10b981;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.plan-upgrade-btn {
+  width: 100%;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plan-upgrade-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.plan-card--popular .plan-upgrade-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.plan-card--popular .plan-upgrade-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.plan-card--best-value .plan-upgrade-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.plan-card--best-value .plan-upgrade-btn:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .project-limit-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .project-limit-header,
+  .project-limit-content,
+  .project-limit-actions {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .project-limit-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .plan-card {
+    padding: 20px;
+  }
+
+  .price-amount {
+    font-size: 1.5rem;
+  }
+
+  .plan-features {
+    font-size: 0.85rem;
+  }
+}

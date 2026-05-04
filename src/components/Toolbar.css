@@ -188,6 +188,46 @@
   text-align: center;
 }
 
+/* Opacity Control */
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.opacity-slider {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  background: #e5e7eb;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.opacity-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.opacity-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 36px;
+  text-align: right;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .toolbar {

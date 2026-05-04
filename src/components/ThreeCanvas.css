@@ -1,0 +1,364 @@
+.three-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3D Control Panel */
+.three-control-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.panel-toggle-btn {
+  background: rgba(30, 41, 59, 0.92);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px 8px 0 0;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.panel-toggle-btn:hover {
+  background: rgba(59, 130, 246, 0.9);
+}
+
+.three-control-panel:not(.open) .panel-toggle-btn {
+  border-radius: 8px;
+}
+
+.panel-content {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 14px;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.panel-select {
+  background: rgba(30, 41, 59, 0.8);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+}
+
+.panel-select option {
+  background: #1e293b;
+  color: white;
+}
+
+.panel-select:focus {
+  border-color: #3b82f6;
+}
+
+.color-presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+
+.color-preset-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.color-preset-btn:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+}
+
+.color-preset-btn.selected {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(59, 130, 246, 0.6);
+}
+
+.custom-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.custom-color-input {
+  width: 36px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.custom-color-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.panel-slider {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.panel-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.panel-hint {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Label row with inline toggle */
+.panel-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel-toggle-label input[type="checkbox"] {
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.panel-toggle-label span {
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* Reset color button */
+.reset-color-btn {
+  background: rgba(255,255,255,0.1);
+  color: #94a3b8;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.reset-color-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.three-canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.three-canvas-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.three-canvas-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 25px;
+  color: white;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.controls-hint {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.control-item:hover {
+  opacity: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .three-canvas-controls {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    padding: 8px 12px;
+  }
+  
+  .controls-hint {
+    gap: 8px;
+    font-size: 11px;
+  }
+  
+  .control-item {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-hint {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .control-item {
+    font-size: 10px;
+  }
+}
+
+/* Canvas container styling */
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+}
+
+/* Integration with existing layout */
+.app-main {
+  position: relative;
+}
+
+.canvas-container {
+  flex: 1;
+  position: relative;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading states */
+.three-canvas-loading p {
+  margin: 0;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Performance optimizations */
+.three-canvas {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .three-canvas-controls {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+}
+
+/* High DPI support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .three-canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

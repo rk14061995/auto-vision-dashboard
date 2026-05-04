@@ -1,53 +1,174 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './Sidebar.css';
 import CarPartsSelector from './CarPartsSelector';
 
-// Import fabric using the v5 method
 const { fabric } = require('fabric');
 
+// Built-in SVG accessories – no external URLs needed
+const ACCESSORY_SVGS = {
+  spoilers: [
+    {
+      id: 'spoiler1', name: 'Sport Spoiler',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 40" width="140" height="40">
+        <rect x="10" y="20" width="120" height="8" rx="4" fill="#1e293b"/>
+        <rect x="15" y="10" width="110" height="12" rx="3" fill="#334155"/>
+        <rect x="20" y="28" width="8" height="10" rx="2" fill="#1e293b"/>
+        <rect x="112" y="28" width="8" height="10" rx="2" fill="#1e293b"/>
+      </svg>`
+    },
+    {
+      id: 'spoiler2', name: 'GT Wing',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" width="160" height="50">
+        <path d="M10 30 Q80 5 150 30" stroke="#dc2626" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <rect x="30" y="28" width="6" height="18" rx="2" fill="#dc2626"/>
+        <rect x="124" y="28" width="6" height="18" rx="2" fill="#dc2626"/>
+      </svg>`
+    },
+    {
+      id: 'spoiler3', name: 'Racing Spoiler',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 45" width="150" height="45">
+        <rect x="5" y="15" width="140" height="10" rx="5" fill="#0f172a"/>
+        <rect x="5" y="23" width="140" height="4" rx="2" fill="#3b82f6"/>
+        <rect x="25" y="25" width="8" height="18" rx="2" fill="#0f172a"/>
+        <rect x="117" y="25" width="8" height="18" rx="2" fill="#0f172a"/>
+      </svg>`
+    },
+  ],
+  antennas: [
+    {
+      id: 'antenna1', name: 'Shark Fin',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 70" width="40" height="70">
+        <path d="M20 65 L5 20 Q20 2 35 20 Z" fill="#1e293b"/>
+        <path d="M20 65 L7 22 Q20 6 33 22 Z" fill="#334155"/>
+      </svg>`
+    },
+    {
+      id: 'antenna2', name: 'Short Antenna',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 55" width="20" height="55">
+        <rect x="8" y="5" width="4" height="45" rx="2" fill="#1e293b"/>
+        <circle cx="10" cy="5" r="4" fill="#374151"/>
+        <rect x="5" y="48" width="10" height="6" rx="2" fill="#1e293b"/>
+      </svg>`
+    },
+    {
+      id: 'antenna3', name: 'Radio Antenna',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 65" width="24" height="65">
+        <rect x="10" y="3" width="4" height="55" rx="2" fill="#64748b"/>
+        <rect x="6" y="56" width="12" height="8" rx="3" fill="#334155"/>
+        <ellipse cx="12" cy="3" rx="4" ry="2" fill="#94a3b8"/>
+      </svg>`
+    },
+  ],
+  stickers: [
+    {
+      id: 'sticker1', name: 'Flame',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90" width="80" height="90">
+        <path d="M40 85 C15 70 10 50 20 35 C25 25 30 30 28 20 C35 30 32 38 38 42 C36 30 42 15 50 10 C48 28 55 32 52 45 C58 35 62 40 60 55 C65 45 70 50 65 65 C58 78 50 85 40 85Z" fill="url(#flameGrad)"/>
+        <defs><linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#dc2626"/><stop offset="50%" stop-color="#f97316"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient></defs>
+      </svg>`
+    },
+    {
+      id: 'sticker2', name: 'Racing Stripe',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 30" width="120" height="30">
+        <rect width="120" height="30" fill="#dc2626"/>
+        <rect y="8" width="120" height="14" fill="white"/>
+        <rect y="10" width="120" height="10" fill="#dc2626"/>
+      </svg>`
+    },
+    {
+      id: 'sticker3', name: 'Star',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+        <polygon points="40,5 50,30 75,30 55,48 63,74 40,58 17,74 25,48 5,30 30,30" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+      </svg>`
+    },
+    {
+      id: 'sticker4', name: 'Lightning',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 90" width="60" height="90">
+        <polygon points="35,5 10,50 30,50 25,85 55,38 35,38 45,5" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+      </svg>`
+    },
+    {
+      id: 'sticker5', name: 'Crown',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 70" width="90" height="70">
+        <polygon points="5,55 5,20 22,38 45,8 68,38 85,20 85,55" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+        <rect x="5" y="55" width="80" height="12" rx="3" fill="#d97706"/>
+        <circle cx="45" cy="8" r="6" fill="#fbbf24"/>
+        <circle cx="5" cy="20" r="5" fill="#fbbf24"/>
+        <circle cx="85" cy="20" r="5" fill="#fbbf24"/>
+      </svg>`
+    },
+  ],
+  graphics: [
+    {
+      id: 'graphic1', name: 'Side Stripe',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" width="160" height="40">
+        <rect width="160" height="40" rx="4" fill="none"/>
+        <path d="M0 20 L30 5 L160 5 L130 20 L160 35 L30 35 Z" fill="#3b82f6" opacity="0.9"/>
+        <path d="M0 20 L30 5 L160 5" stroke="white" stroke-width="2" fill="none"/>
+        <path d="M0 20 L30 35 L160 35" stroke="white" stroke-width="2" fill="none"/>
+      </svg>`
+    },
+    {
+      id: 'graphic2', name: 'Checkered',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 30" width="120" height="30">
+        <rect width="120" height="30" fill="white"/>
+        ${Array.from({ length: 8 }, (_, i) =>
+          `<rect x="${i * 15}" y="0" width="15" height="15" fill="${i % 2 === 0 ? '#1e293b' : 'white'}"/>
+           <rect x="${i * 15 + 7.5}" y="15" width="15" height="15" fill="${i % 2 === 0 ? '#1e293b' : 'white'}"/>`
+        ).join('')}
+      </svg>`
+    },
+    {
+      id: 'graphic3', name: 'Racing #1',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+        <circle cx="30" cy="30" r="28" fill="#dc2626" stroke="white" stroke-width="3"/>
+        <text x="30" y="42" text-anchor="middle" font-family="Arial Black" font-size="32" font-weight="900" fill="white">1</text>
+      </svg>`
+    },
+    {
+      id: 'graphic4', name: 'Racing #99',
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60" width="80" height="60">
+        <rect width="80" height="60" rx="8" fill="#1e293b"/>
+        <text x="40" y="44" text-anchor="middle" font-family="Arial Black" font-size="32" font-weight="900" fill="#fbbf24">99</text>
+      </svg>`
+    },
+  ]
+};
+
+const fontOptions = [
+  'Arial', 'Arial Black', 'Times New Roman', 'Georgia', 'Verdana',
+  'Impact', 'Trebuchet MS', 'Courier New', 'Palatino', 'Comic Sans MS'
+];
+
 const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
-  const [activeCategory, setActiveCategory] = useState('spoilers');
+  const [activeCategory, setActiveCategory] = useState('stickers');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isEditingText, setIsEditingText] = useState(false);
 
-  // Accessories data - in a real app, these would be actual image URLs
-  const accessories = {
-    spoilers: [
-      { id: 'spoiler1', name: 'Sport Spoiler', url: '/api/placeholder/120/40' },
-      { id: 'spoiler2', name: 'Racing Spoiler', url: '/api/placeholder/140/45' },
-      { id: 'spoiler3', name: 'GT Wing', url: '/api/placeholder/160/50' },
-    ],
-    antennas: [
-      { id: 'antenna1', name: 'Shark Fin', url: '/api/placeholder/30/60' },
-      { id: 'antenna2', name: 'Short Antenna', url: '/api/placeholder/20/50' },
-      { id: 'antenna3', name: 'LED Antenna', url: '/api/placeholder/25/55' },
-    ],
-    stickers: [
-      { id: 'sticker1', name: 'Flame Decal', url: '/api/placeholder/80/80' },
-      { id: 'sticker2', name: 'Racing Stripe', url: '/api/placeholder/100/30' },
-      { id: 'sticker3', name: 'Tribal', url: '/api/placeholder/90/90' },
-      { id: 'sticker4', name: 'Skull', url: '/api/placeholder/70/70' },
-    ],
-    graphics: [
-      { id: 'graphic1', name: 'Side Stripe', url: '/api/placeholder/150/40' },
-      { id: 'graphic2', name: 'Hood Design', url: '/api/placeholder/120/80' },
-      { id: 'graphic3', name: 'Racing Number', url: '/api/placeholder/60/60' },
-    ]
-  };
-
-  // State for custom text
+  // Text state
   const [customText, setCustomText] = useState('');
-  const [selectedFont, setSelectedFont] = useState('Arial');
-  const [fontSize, setFontSize] = useState(30);
-  const [textColor, setTextColor] = useState('#000000');
+  const [selectedFont, setSelectedFont] = useState('Impact');
+  const [fontSize, setFontSize] = useState(36);
+  const [textColor, setTextColor] = useState('#ff0000');
+  const [textBold, setTextBold] = useState(true);
+  const [textShadow, setTextShadow] = useState(true);
 
-  // Update text controls when a text object is selected
+  // Draw state
+  const [drawMode, setDrawMode] = useState(null); // 'pencil' | 'rect' | 'circle' | 'line' | null
+  const [drawColor, setDrawColor] = useState('#ef4444');
+  const [drawWidth, setDrawWidth] = useState(4);
+  const [drawFill, setDrawFill] = useState('transparent');
+  const drawStartRef = useRef(null);
+  const drawShapeRef = useRef(null);
+  const logoInputRef = useRef(null);
+
+  // Sync text editor when a text object is selected
   React.useEffect(() => {
     if (selectedObject && selectedObject.type === 'text') {
       setCustomText(selectedObject.text);
-      setSelectedFont(selectedObject.fontFamily);
-      setFontSize(selectedObject.fontSize);
-      setTextColor(selectedObject.fill);
+      setSelectedFont(selectedObject.fontFamily || 'Impact');
+      setFontSize(selectedObject.fontSize || 36);
+      setTextColor(selectedObject.fill || '#ff0000');
       setIsEditingText(true);
       setActiveCategory('text');
     } else {
@@ -55,335 +176,506 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
     }
   }, [selectedObject]);
 
-  // Font options
-  const fontOptions = [
-    'Arial',
-    'Times New Roman',
-    'Courier New',
-    'Georgia',
-    'Verdana',
-    'Comic Sans MS',
-    'Impact',
-    'Trebuchet MS',
-    'Palatino',
-    'Garamond'
-  ];
+  // Drawing tool mode management
+  React.useEffect(() => {
+    if (!fabricCanvas) return;
 
-  // Add custom text to canvas or update existing text
-  const addCustomTextToCanvas = () => {
+    const isDrawing = drawMode === 'pencil';
+    fabricCanvas.isDrawingMode = isDrawing;
+
+    if (isDrawing) {
+      fabricCanvas.freeDrawingBrush.color = drawColor;
+      fabricCanvas.freeDrawingBrush.width = drawWidth;
+    }
+
+    // Detach shape drawing listeners
+    fabricCanvas.off('mouse:down', handleShapeDown);
+    fabricCanvas.off('mouse:move', handleShapeMove);
+    fabricCanvas.off('mouse:up', handleShapeUp);
+
+    if (drawMode === 'rect' || drawMode === 'circle' || drawMode === 'line') {
+      fabricCanvas.selection = false;
+      fabricCanvas.on('mouse:down', handleShapeDown);
+      fabricCanvas.on('mouse:move', handleShapeMove);
+      fabricCanvas.on('mouse:up', handleShapeUp);
+    } else if (!isDrawing) {
+      fabricCanvas.selection = true;
+    }
+
+    fabricCanvas.requestRenderAll();
+
+    return () => {
+      fabricCanvas.off('mouse:down', handleShapeDown);
+      fabricCanvas.off('mouse:move', handleShapeMove);
+      fabricCanvas.off('mouse:up', handleShapeUp);
+    };
+  }, [fabricCanvas, drawMode, drawColor, drawWidth, drawFill]);
+
+  const handleShapeDown = (opt) => {
+    if (!fabricCanvas) return;
+    const pointer = fabricCanvas.getPointer(opt.e);
+    drawStartRef.current = { x: pointer.x, y: pointer.y };
+
+    const commonProps = {
+      left: pointer.x,
+      top: pointer.y,
+      stroke: drawColor,
+      strokeWidth: drawWidth,
+      selectable: true,
+      evented: true,
+    };
+
+    if (drawMode === 'rect') {
+      const rect = new fabric.Rect({
+        ...commonProps,
+        width: 0,
+        height: 0,
+        fill: drawFill === 'transparent' ? 'transparent' : drawFill,
+      });
+      fabricCanvas.add(rect);
+      drawShapeRef.current = rect;
+    } else if (drawMode === 'circle') {
+      const circle = new fabric.Ellipse({
+        ...commonProps,
+        rx: 0,
+        ry: 0,
+        fill: drawFill === 'transparent' ? 'transparent' : drawFill,
+      });
+      fabricCanvas.add(circle);
+      drawShapeRef.current = circle;
+    } else if (drawMode === 'line') {
+      const line = new fabric.Line(
+        [pointer.x, pointer.y, pointer.x, pointer.y],
+        { ...commonProps, fill: drawColor }
+      );
+      fabricCanvas.add(line);
+      drawShapeRef.current = line;
+    }
+  };
+
+  const handleShapeMove = (opt) => {
+    if (!drawStartRef.current || !drawShapeRef.current || !fabricCanvas) return;
+    const pointer = fabricCanvas.getPointer(opt.e);
+    const start = drawStartRef.current;
+    const shape = drawShapeRef.current;
+
+    if (drawMode === 'rect') {
+      const w = Math.abs(pointer.x - start.x);
+      const h = Math.abs(pointer.y - start.y);
+      shape.set({
+        left: Math.min(pointer.x, start.x),
+        top: Math.min(pointer.y, start.y),
+        width: w,
+        height: h,
+      });
+    } else if (drawMode === 'circle') {
+      const rx = Math.abs(pointer.x - start.x) / 2;
+      const ry = Math.abs(pointer.y - start.y) / 2;
+      shape.set({
+        left: Math.min(pointer.x, start.x),
+        top: Math.min(pointer.y, start.y),
+        rx,
+        ry,
+      });
+    } else if (drawMode === 'line') {
+      shape.set({ x2: pointer.x, y2: pointer.y });
+    }
+
+    fabricCanvas.requestRenderAll();
+  };
+
+  const handleShapeUp = () => {
+    drawStartRef.current = null;
+    drawShapeRef.current = null;
+  };
+
+  const stopDrawMode = () => {
+    setDrawMode(null);
+    if (fabricCanvas) {
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = true;
+      fabricCanvas.requestRenderAll();
+    }
+  };
+
+  // Add SVG accessory to canvas
+  const addAccessoryToCanvas = (item) => {
+    if (!fabricCanvas) return;
+    const svgData = item.svg;
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+
+    fabric.loadSVGFromURL(url, (objects, options) => {
+      const group = fabric.util.groupSVGElements(objects, options);
+      group.set({
+        left: fabricCanvas.getWidth() / 2,
+        top: fabricCanvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        evented: true,
+        hasControls: true,
+        hasBorders: true,
+      });
+      fabricCanvas.add(group);
+      fabricCanvas.setActiveObject(group);
+      fabricCanvas.renderAll();
+      URL.revokeObjectURL(url);
+    });
+  };
+
+  // Add text to canvas
+  const addTextToCanvas = () => {
     if (!fabricCanvas || !customText.trim()) return;
 
-    if (isEditingText && selectedObject && selectedObject.type === 'text') {
-      // Update existing text object
+    if (isEditingText && selectedObject?.type === 'text') {
       selectedObject.set({
         text: customText,
         fontFamily: selectedFont,
-        fontSize: fontSize,
+        fontSize,
         fill: textColor,
-        stroke: textColor
+        fontWeight: textBold ? 'bold' : 'normal',
       });
       fabricCanvas.renderAll();
     } else {
-      // Create new text object
       const text = new fabric.Text(customText, {
         left: fabricCanvas.getWidth() / 2,
         top: fabricCanvas.getHeight() / 2,
         originX: 'center',
         originY: 'center',
-        fontSize: fontSize,
+        fontSize,
         fill: textColor,
         fontFamily: selectedFont,
-        fontWeight: 'bold',
+        fontWeight: textBold ? 'bold' : 'normal',
         selectable: true,
         evented: true,
-        hasControls: true,
-        hasBorders: true,
-        transparentCorners: false,
-        cornerColor: '#3b82f6',
-        cornerStrokeColor: '#ffffff',
-        borderColor: '#3b82f6',
-        cornerSize: 8,
-        padding: 5,
-        // Add 3D rotation properties
-        skewX: 0,
-        skewY: 0,
-        // Enable 3D transformation
-        objectCaching: false,
-        stroke: textColor,
-        strokeWidth: 0,
-        shadow: new fabric.Shadow({
-          color: 'rgba(0,0,0,0.3)',
-          blur: 5,
-          offsetX: 2,
-          offsetY: 2
-        })
+        shadow: textShadow
+          ? new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 6, offsetX: 2, offsetY: 2 })
+          : null,
       });
-      
-      // Add to canvas
       fabricCanvas.add(text);
       fabricCanvas.setActiveObject(text);
       fabricCanvas.renderAll();
-    }
-    
-    // Clear the input for new text, but keep it for editing
-    if (!isEditingText) {
-      setCustomText('');
+      if (!isEditingText) setCustomText('');
     }
   };
 
-  // Update text properties dynamically
-  const updateTextProperties = (property, value) => {
-    if (isEditingText && selectedObject && selectedObject.type === 'text') {
-      selectedObject.set(property, value);
-      fabricCanvas.renderAll();
+  const updateTextProp = (prop, val) => {
+    if (isEditingText && selectedObject?.type === 'text') {
+      selectedObject.set(prop, val);
+      fabricCanvas?.renderAll();
     }
   };
 
-  // Handle text change
-  const handleTextChange = (value) => {
-    setCustomText(value);
-    updateTextProperties('text', value);
-  };
-
-  // Handle font change
-  const handleFontChange = (value) => {
-    setSelectedFont(value);
-    updateTextProperties('fontFamily', value);
-  };
-
-  // Handle size change
-  const handleSizeChange = (value) => {
-    setFontSize(parseInt(value));
-    updateTextProperties('fontSize', parseInt(value));
-  };
-
-  // Handle color change
-  const handleColorChange = (value) => {
-    setTextColor(value);
-    updateTextProperties('fill', value);
-    updateTextProperties('stroke', value);
-  };
-
-  // Create placeholder SVG for accessories
-  const createPlaceholderSVG = (width, height, name) => {
-    const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    
-    return `data:image/svg+xml;base64,${btoa(`
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="${color}" opacity="0.8" rx="4"/>
-        <text x="50%" y="50%" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dy=".3em">
-          ${name}
-        </text>
-      </svg>
-    `)}`;
-  };
-
-  // Add accessory to canvas
-  const addAccessoryToCanvas = (accessory) => {
-    if (!fabricCanvas) return;
-
-    // Create a placeholder image using SVG
-    const svgUrl = createPlaceholderSVG(120, 80, accessory.name);
-    
-    fabric.Image.fromURL(svgUrl, (img) => {
-      // Set initial position and properties
-      const canvasWidth = fabricCanvas.getWidth();
-      const canvasHeight = fabricCanvas.getHeight();
-      
-      img.set({
-        left: canvasWidth / 2,
-        top: canvasHeight / 2,
-        originX: 'center',
-        originY: 'center',
-        scaleX: 1,
-        scaleY: 1,
-        selectable: true,
-        evented: true,
-        hasControls: true,
-        hasBorders: true,
-        transparentCorners: false,
-        cornerColor: '#3b82f6',
-        cornerStrokeColor: '#ffffff',
-        borderColor: '#3b82f6',
-        cornerSize: 8,
-        padding: 5
-      });
-      
-      // Add to canvas
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.renderAll();
-    }, {
-      crossOrigin: 'anonymous'
-    });
+  // Logo upload from file
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !fabricCanvas) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      if (file.type === 'image/svg+xml') {
+        fabric.loadSVGFromURL(dataUrl, (objects, options) => {
+          const group = fabric.util.groupSVGElements(objects, options);
+          const maxSize = 150;
+          const scale = maxSize / Math.max(group.width, group.height);
+          group.set({
+            left: fabricCanvas.getWidth() / 2,
+            top: fabricCanvas.getHeight() / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: scale,
+            scaleY: scale,
+            selectable: true,
+            evented: true,
+          });
+          fabricCanvas.add(group);
+          fabricCanvas.setActiveObject(group);
+          fabricCanvas.renderAll();
+        });
+      } else {
+        fabric.Image.fromURL(dataUrl, (img) => {
+          const maxSize = 200;
+          const scale = maxSize / Math.max(img.width, img.height);
+          img.set({
+            left: fabricCanvas.getWidth() / 2,
+            top: fabricCanvas.getHeight() / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: scale,
+            scaleY: scale,
+            selectable: true,
+            evented: true,
+          });
+          fabricCanvas.add(img);
+          fabricCanvas.setActiveObject(img);
+          fabricCanvas.renderAll();
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const categories = [
+    { id: 'stickers', name: 'Stickers', icon: '🎨' },
     { id: 'spoilers', name: 'Spoilers', icon: '🏁' },
     { id: 'antennas', name: 'Antennas', icon: '📡' },
-    { id: 'stickers', name: 'Stickers', icon: '🎨' },
     { id: 'graphics', name: 'Graphics', icon: '✨' },
-    { id: 'text', name: 'Text', icon: '📝' }
+    { id: 'text', name: 'Text', icon: '📝' },
+    { id: 'logo', name: 'Logo', icon: '🖼️' },
+    { id: 'draw', name: 'Draw', icon: '✏️' },
   ];
 
   return (
     <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      {/* Car Parts Selector */}
-      <CarPartsSelector 
+      <CarPartsSelector
         fabricCanvas={fabricCanvas}
         selectedObject={selectedObject}
         onSelectPart={onSelectCarPart}
       />
 
-      {/* Sidebar Header */}
       <div className="sidebar-header">
-        <h3 className="sidebar-title">Custom Tools</h3>
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
+        <h3 className="sidebar-title">Customize</h3>
+        <button className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
           {isCollapsed ? '→' : '←'}
         </button>
       </div>
 
       {!isCollapsed && (
         <>
-          {/* Category Tabs */}
           <div className="category-tabs">
-            {categories.map(category => (
+            {categories.map((cat) => (
               <button
-                key={category.id}
-                className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category.id)}
+                key={cat.id}
+                className={`category-tab ${activeCategory === cat.id ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  if (cat.id !== 'draw') stopDrawMode();
+                }}
               >
-                <span className="category-icon">{category.icon}</span>
-                <span className="category-name">{category.name}</span>
+                <span className="category-icon">{cat.icon}</span>
+                <span className="category-name">{cat.name}</span>
               </button>
             ))}
           </div>
 
-          {/* Accessories Grid */}
           <div className="accessories-grid">
-            {activeCategory === 'text' ? (
+            {/* Accessories grids */}
+            {['stickers', 'spoilers', 'antennas', 'graphics'].includes(activeCategory) &&
+              ACCESSORY_SVGS[activeCategory]?.map((item) => (
+                <div
+                  key={item.id}
+                  className="accessory-item"
+                  onClick={() => addAccessoryToCanvas(item)}
+                  title={`Add ${item.name}`}
+                >
+                  <div
+                    className="accessory-preview"
+                    dangerouslySetInnerHTML={{ __html: item.svg }}
+                  />
+                  <span className="accessory-name">{item.name}</span>
+                </div>
+              ))}
+
+            {/* Text tool */}
+            {activeCategory === 'text' && (
               <div className="text-input-section">
                 <div className="text-input-container">
-                  <input
-                    type="text"
+                  <textarea
                     value={customText}
-                    onChange={(e) => handleTextChange(e.target.value)}
-                    placeholder={isEditingText ? "Edit selected text..." : "Enter custom text..."}
-                    className="text-input"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        addCustomTextToCanvas();
-                      }
+                    onChange={(e) => {
+                      setCustomText(e.target.value);
+                      updateTextProp('text', e.target.value);
                     }}
+                    placeholder={isEditingText ? 'Edit text...' : 'Type your text...'}
+                    className="text-input"
+                    rows={2}
                   />
-                  
-                  {/* Font Selection */}
+
                   <div className="text-controls">
                     <div className="control-group">
-                      <label className="control-label">Font:</label>
+                      <label className="control-label">Font</label>
                       <select
                         value={selectedFont}
-                        onChange={(e) => handleFontChange(e.target.value)}
+                        onChange={(e) => { setSelectedFont(e.target.value); updateTextProp('fontFamily', e.target.value); }}
                         className="font-select"
                       >
-                        {fontOptions.map(font => (
-                          <option key={font} value={font}>{font}</option>
-                        ))}
+                        {fontOptions.map((f) => <option key={f} value={f}>{f}</option>)}
                       </select>
                     </div>
-                    
+
                     <div className="control-group">
-                      <label className="control-label">Size:</label>
-                      <div className="size-control">
-                        <input
-                          type="range"
-                          min="10"
-                          max="100"
-                          value={fontSize}
-                          onChange={(e) => handleSizeChange(e.target.value)}
-                          className="size-slider"
-                        />
-                        <span className="size-value">{fontSize}px</span>
-                      </div>
+                      <label className="control-label">Size: {fontSize}px</label>
+                      <input
+                        type="range" min="12" max="120" value={fontSize}
+                        onChange={(e) => { const v = parseInt(e.target.value); setFontSize(v); updateTextProp('fontSize', v); }}
+                        className="size-slider"
+                      />
                     </div>
-                    
+
                     <div className="control-group">
-                      <label className="control-label">Color:</label>
+                      <label className="control-label">Color</label>
                       <div className="color-control">
-                        <input
-                          type="color"
-                          value={textColor}
-                          onChange={(e) => handleColorChange(e.target.value)}
+                        <input type="color" value={textColor}
+                          onChange={(e) => { setTextColor(e.target.value); updateTextProp('fill', e.target.value); }}
                           className="color-picker"
                         />
                         <span className="color-value">{textColor}</span>
                       </div>
                     </div>
+
+                    <div className="control-group toggle-row">
+                      <label className="control-label">
+                        <input type="checkbox" checked={textBold}
+                          onChange={(e) => { setTextBold(e.target.checked); updateTextProp('fontWeight', e.target.checked ? 'bold' : 'normal'); }}
+                        /> Bold
+                      </label>
+                      <label className="control-label">
+                        <input type="checkbox" checked={textShadow}
+                          onChange={(e) => {
+                            setTextShadow(e.target.checked);
+                            if (isEditingText && selectedObject?.type === 'text') {
+                              selectedObject.set('shadow', e.target.checked
+                                ? new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 6, offsetX: 2, offsetY: 2 })
+                                : null);
+                              fabricCanvas?.renderAll();
+                            }
+                          }}
+                        /> Shadow
+                      </label>
+                    </div>
                   </div>
-                  
+
                   <button
-                    onClick={addCustomTextToCanvas}
+                    onClick={addTextToCanvas}
                     className={`btn ${isEditingText ? 'btn-success' : 'btn-primary'} add-text-btn`}
                     disabled={!customText.trim()}
                   >
-                    {isEditingText ? 'Update Text' : 'Add Text'}
+                    {isEditingText ? '✏️ Update Text' : '➕ Add Text'}
                   </button>
                 </div>
-                
+
                 <div className="text-examples">
-                  <p className="example-title">Examples:</p>
+                  <p className="example-title">Quick examples:</p>
                   <div className="example-buttons">
-                    {['RACING', 'SPORT', 'TURBO', 'CUSTOM'].map((example) => (
-                      <button
-                        key={example}
-                        onClick={() => {
-                          setCustomText(example);
-                          setTimeout(() => addCustomTextToCanvas(), 100);
-                        }}
-                        className="example-btn"
-                      >
-                        {example}
+                    {['RACING', 'SPORT', 'TURBO', 'CUSTOM', '2025', 'DRIFT'].map((ex) => (
+                      <button key={ex} className="example-btn"
+                        onClick={() => { setCustomText(ex); setTimeout(addTextToCanvas, 50); }}>
+                        {ex}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
-            ) : (
-              accessories[activeCategory]?.map(accessory => (
-                <div
-                  key={accessory.id}
-                  className="accessory-item"
-                  onClick={() => addAccessoryToCanvas(accessory)}
-                  title={accessory.name}
+            )}
+
+            {/* Logo upload */}
+            {activeCategory === 'logo' && (
+              <div className="logo-section">
+                <p className="logo-description">
+                  Upload a PNG, JPG, or SVG logo to place on your car.
+                </p>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*,.svg"
+                  style={{ display: 'none' }}
+                  onChange={handleLogoUpload}
+                />
+                <button
+                  className="btn btn-primary logo-upload-btn"
+                  onClick={() => logoInputRef.current?.click()}
                 >
-                  <div className="accessory-preview">
-                    <img
-                      src={createPlaceholderSVG(80, 60, accessory.name)}
-                      alt={accessory.name}
-                      className="accessory-image"
+                  📁 Choose Logo File
+                </button>
+                <div className="logo-tips">
+                  <p>✅ PNG with transparency works best</p>
+                  <p>✅ SVG files are supported</p>
+                  <p>✅ Resize with corner handles</p>
+                </div>
+              </div>
+            )}
+
+            {/* Drawing tools */}
+            {activeCategory === 'draw' && (
+              <div className="draw-section">
+                <div className="draw-tools">
+                  {[
+                    { id: 'pencil', label: '✏️ Pencil', title: 'Free draw' },
+                    { id: 'rect', label: '⬜ Rectangle', title: 'Draw rectangle' },
+                    { id: 'circle', label: '⭕ Ellipse', title: 'Draw ellipse' },
+                    { id: 'line', label: '➖ Line', title: 'Draw line' },
+                  ].map((tool) => (
+                    <button
+                      key={tool.id}
+                      className={`draw-tool-btn ${drawMode === tool.id ? 'active' : ''}`}
+                      onClick={() => setDrawMode(drawMode === tool.id ? null : tool.id)}
+                      title={tool.title}
+                    >
+                      {tool.label}
+                    </button>
+                  ))}
+                  {drawMode && (
+                    <button className="draw-tool-btn stop" onClick={stopDrawMode}>
+                      🔲 Stop Drawing
+                    </button>
+                  )}
+                </div>
+
+                {drawMode && (
+                  <p className="draw-hint">
+                    {drawMode === 'pencil'
+                      ? 'Click and drag to draw freely'
+                      : `Click and drag to draw a ${drawMode}`}
+                  </p>
+                )}
+
+                <div className="draw-controls">
+                  <div className="control-group">
+                    <label className="control-label">Stroke Color</label>
+                    <div className="color-control">
+                      <input type="color" value={drawColor}
+                        onChange={(e) => setDrawColor(e.target.value)}
+                        className="color-picker"
+                      />
+                      <span className="color-value">{drawColor}</span>
+                    </div>
+                  </div>
+
+                  <div className="control-group">
+                    <label className="control-label">Fill Color</label>
+                    <div className="color-control">
+                      <input type="color" value={drawFill === 'transparent' ? '#ffffff' : drawFill}
+                        onChange={(e) => setDrawFill(e.target.value)}
+                        className="color-picker"
+                      />
+                      <label className="control-label" style={{ marginLeft: 8 }}>
+                        <input type="checkbox"
+                          checked={drawFill === 'transparent'}
+                          onChange={(e) => setDrawFill(e.target.checked ? 'transparent' : '#ffffff')}
+                        /> No fill
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="control-group">
+                    <label className="control-label">Width: {drawWidth}px</label>
+                    <input
+                      type="range" min="1" max="20" value={drawWidth}
+                      onChange={(e) => setDrawWidth(parseInt(e.target.value))}
+                      className="size-slider"
                     />
                   </div>
-                  <span className="accessory-name">{accessory.name}</span>
                 </div>
-              ))
+              </div>
             )}
           </div>
 
-          {/* Instructions */}
           <div className="sidebar-instructions">
-            <p className="instruction-text">
-              💡 Click on any accessory to add it to the canvas
-            </p>
-            <p className="instruction-text">
-              🎯 Select objects to move, resize, or rotate
-            </p>
-            <p className="instruction-text">
-              ⌨️ Press Delete to remove selected item
-            </p>
+            <p className="instruction-text">💡 Click accessory to add it</p>
+            <p className="instruction-text">🎯 Drag to move, corners to resize</p>
+            <p className="instruction-text">⌨️ Delete to remove, Ctrl+Z to undo</p>
           </div>
         </>
       )}
