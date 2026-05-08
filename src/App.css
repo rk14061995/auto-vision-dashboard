@@ -32,8 +32,9 @@
 }
 
 .brand-icon {
-  font-size: 28px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  color: #60a5fa;
 }
 
 .app-title {
@@ -235,10 +236,16 @@
 }
 
 .welcome-icon {
-  font-size: 56px;
   line-height: 1;
   margin-bottom: 16px;
   animation: float 3s ease-in-out infinite;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-car-icon {
+  color: #4f46e5;
+  filter: drop-shadow(0 4px 12px rgba(79, 70, 229, 0.35));
 }
 
 @keyframes float {

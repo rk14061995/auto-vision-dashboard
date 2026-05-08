@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import './Toolbar.css';
+import {
+  UndoIcon, RedoIcon, TrashIcon, RotateCCWIcon, RotateCWIcon,
+  FlipHIcon, FlipVIcon, SkewLIcon, SkewRIcon,
+  MinusIcon, PlusIcon, RefreshIcon,
+  CarIcon, ImageIcon, TypeIcon, SquareIcon, CircleIcon, PathIcon, BoxIcon
+} from './Icons';
 
 const Toolbar = ({
   selectedObject,
@@ -106,8 +112,8 @@ const Toolbar = ({
       <div className="toolbar-section">
         <h4 className="toolbar-section-title">History</h4>
         <div className="toolbar-controls">
-          <button className="btn-icon" onClick={onUndo} title="Undo (Ctrl+Z)">↩</button>
-          <button className="btn-icon" onClick={onRedo} title="Redo (Ctrl+Y)">↪</button>
+          <button className="btn-icon" onClick={onUndo} title="Undo (Ctrl+Z)"><UndoIcon size={16} /></button>
+          <button className="btn-icon" onClick={onRedo} title="Redo (Ctrl+Y)"><RedoIcon size={16} /></button>
         </div>
       </div>
 
@@ -115,15 +121,15 @@ const Toolbar = ({
       <div className="toolbar-section">
         <h4 className="toolbar-section-title">Transform</h4>
         <div className="toolbar-controls">
-          <button className="btn-icon" onClick={onDeleteSelected} disabled={!isObjSelected} title="Delete (Del)">🗑️</button>
-          <button className="btn-icon" onClick={onRotateLeft} disabled={!isObjSelected} title="Rotate Left">↺</button>
-          <button className="btn-icon" onClick={onRotateRight} disabled={!isObjSelected} title="Rotate Right">↻</button>
+          <button className="btn-icon" onClick={onDeleteSelected} disabled={!isObjSelected} title="Delete (Del)"><TrashIcon size={16} /></button>
+          <button className="btn-icon" onClick={onRotateLeft} disabled={!isObjSelected} title="Rotate Left"><RotateCCWIcon size={16} /></button>
+          <button className="btn-icon" onClick={onRotateRight} disabled={!isObjSelected} title="Rotate Right"><RotateCWIcon size={16} /></button>
           <div className="toolbar-divider" />
-          <button className="btn-icon" onClick={onFlipH} disabled={!isObjSelected} title="Flip Horizontal">↔️</button>
-          <button className="btn-icon" onClick={onFlipV} disabled={!isObjSelected} title="Flip Vertical">↕️</button>
+          <button className="btn-icon" onClick={onFlipH} disabled={!isObjSelected} title="Flip Horizontal"><FlipHIcon size={16} /></button>
+          <button className="btn-icon" onClick={onFlipV} disabled={!isObjSelected} title="Flip Vertical"><FlipVIcon size={16} /></button>
           <div className="toolbar-divider" />
-          <button className="btn-icon" onClick={onRotateZLeft} disabled={!isObjSelected} title="Skew Left">↙️</button>
-          <button className="btn-icon" onClick={onRotateZRight} disabled={!isObjSelected} title="Skew Right">↘️</button>
+          <button className="btn-icon" onClick={onRotateZLeft} disabled={!isObjSelected} title="Skew Left"><SkewLIcon size={16} /></button>
+          <button className="btn-icon" onClick={onRotateZRight} disabled={!isObjSelected} title="Skew Right"><SkewRIcon size={16} /></button>
         </div>
       </div>
 
@@ -132,10 +138,10 @@ const Toolbar = ({
         <div className="toolbar-section">
           <h4 className="toolbar-section-title">Zoom</h4>
           <div className="toolbar-controls">
-            <button className="btn-icon" onClick={onZoomOut} title="Zoom Out (-)">➖</button>
+            <button className="btn-icon" onClick={onZoomOut} title="Zoom Out (-)"><MinusIcon size={16} /></button>
             <span className="zoom-percentage">{Math.round(canvasZoom * 100)}%</span>
-            <button className="btn-icon" onClick={onZoomIn} title="Zoom In (+)">➕</button>
-            <button className="btn-icon" onClick={onResetCanvas} title="Reset View">🔄</button>
+            <button className="btn-icon" onClick={onZoomIn} title="Zoom In (+)"><PlusIcon size={16} /></button>
+            <button className="btn-icon" onClick={onResetCanvas} title="Reset View"><RefreshIcon size={16} /></button>
           </div>
         </div>
       )}
@@ -193,19 +199,19 @@ const Toolbar = ({
         <div className="selection-info">
           {activeObj?.carPartId ? (
             <div className="selection-details">
-              <span className="selection-type">🚗 Car Part</span>
+              <span className="selection-type"><CarIcon size={12} /> Car Part</span>
               <span className="selection-size">{activeObj.carPartName}</span>
             </div>
           ) : selectedObject ? (
             <div className="selection-details">
               <span className="selection-type">
-                {selectedObject.type === 'image' ? '🖼️ Image' :
-                 selectedObject.type === 'text' ? '📝 Text' :
-                 selectedObject.type === 'rect' ? '⬜ Rect' :
-                 selectedObject.type === 'ellipse' ? '⭕ Ellipse' :
-                 selectedObject.type === 'line' ? '➖ Line' :
-                 selectedObject.type === 'path' ? '✏️ Path' :
-                 selectedObject.type === 'group' ? '📦 Group' : '📦 Object'}
+                {selectedObject.type === 'image' ? <><ImageIcon size={12} /> Image</> :
+                 selectedObject.type === 'text' ? <><TypeIcon size={12} /> Text</> :
+                 selectedObject.type === 'rect' ? <><SquareIcon size={12} /> Rect</> :
+                 selectedObject.type === 'ellipse' ? <><CircleIcon size={12} /> Ellipse</> :
+                 selectedObject.type === 'line' ? <><MinusIcon size={12} /> Line</> :
+                 selectedObject.type === 'path' ? <><PathIcon size={12} /> Path</> :
+                 selectedObject.type === 'group' ? <><BoxIcon size={12} /> Group</> : <><BoxIcon size={12} /> Object</>}
               </span>
               {selectedObject.type === 'text' && (
                 <span className="selection-size">{selectedObject.fontSize}px {selectedObject.fontFamily}</span>

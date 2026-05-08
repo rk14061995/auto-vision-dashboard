@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
 import './Sidebar.css';
 import CarPartsSelector from './CarPartsSelector';
+import {
+  PaletteIcon, FlagIcon, RadioIcon, SparkleIcon, TypeIcon,
+  ImageIcon, PencilIcon, PlusIcon, FolderIcon, CheckIcon,
+  StopCircleIcon, SquareIcon, CircleIcon, MinusIcon, InfoIcon,
+  MoveIcon, KeyboardIcon, ChevronLeftIcon, ChevronRightIcon, CarIcon
+} from './Icons';
 
 const { fabric } = require('fabric');
 
@@ -140,7 +146,7 @@ const fontOptions = [
   'Impact', 'Trebuchet MS', 'Courier New', 'Palatino', 'Comic Sans MS'
 ];
 
-const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
+const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) => {
   const [activeCategory, setActiveCategory] = useState('stickers');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isEditingText, setIsEditingText] = useState(false);
@@ -417,14 +423,49 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
     e.target.value = '';
   };
 
+  // Add 2D image from catalog URL onto canvas
+  const addCatalogImageToCanvas = (url, label) => {
+    if (!fabricCanvas) return;
+    const { fabric } = require('fabric');
+    fabric.Image.fromURL(url, (img) => {
+      if (!img || !fabricCanvas) return;
+      const maxSize = 300;
+      const scale = maxSize / Math.max(img.width || 300, img.height || 200);
+      img.set({
+        left: fabricCanvas.getWidth() / 2,
+        top: fabricCanvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        scaleX: scale,
+        scaleY: scale,
+        selectable: true,
+        evented: true,
+      });
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.renderAll();
+    }, { crossOrigin: 'anonymous' });
+  };
+
+  // Add 2D accessory image onto canvas
+  const addCatalogAccessoryToCanvas = (acc) => {
+    if (!acc.image2dUrl || !fabricCanvas) return;
+    addCatalogImageToCanvas(acc.image2dUrl, acc.name);
+  };
+
+  const hasCatalogImages = carCatalog?.images2d?.length > 0;
+  const hasCatalogAccessories = carCatalog?.accessories?.some((a) => a.image2dUrl && (a.accessoryType === '2d' || a.accessoryType === 'both'));
+
   const categories = [
-    { id: 'stickers', name: 'Stickers', icon: '🎨' },
-    { id: 'spoilers', name: 'Spoilers', icon: '🏁' },
-    { id: 'antennas', name: 'Antennas', icon: '📡' },
-    { id: 'graphics', name: 'Graphics', icon: '✨' },
-    { id: 'text', name: 'Text', icon: '📝' },
-    { id: 'logo', name: 'Logo', icon: '🖼️' },
-    { id: 'draw', name: 'Draw', icon: '✏️' },
+    ...(hasCatalogImages ? [{ id: 'car-views', name: 'Car Views', icon: <CarIcon size={14} /> }] : []),
+    ...(hasCatalogAccessories ? [{ id: 'catalog-acc', name: 'Parts', icon: <FlagIcon size={14} /> }] : []),
+    { id: 'stickers', name: 'Stickers', icon: <PaletteIcon size={14} /> },
+    { id: 'spoilers', name: 'Spoilers', icon: <FlagIcon size={14} /> },
+    { id: 'antennas', name: 'Antennas', icon: <RadioIcon size={14} /> },
+    { id: 'graphics', name: 'Graphics', icon: <SparkleIcon size={14} /> },
+    { id: 'text', name: 'Text', icon: <TypeIcon size={14} /> },
+    { id: 'logo', name: 'Logo', icon: <ImageIcon size={14} /> },
+    { id: 'draw', name: 'Draw', icon: <PencilIcon size={14} /> },
   ];
 
   return (
@@ -438,7 +479,7 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
       <div className="sidebar-header">
         <h3 className="sidebar-title">Customize</h3>
         <button className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
-          {isCollapsed ? '→' : '←'}
+          {isCollapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
         </button>
       </div>
 
@@ -461,7 +502,53 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
           </div>
 
           <div className="accessories-grid">
-            {/* Accessories grids */}
+            {/* Catalog Car Views */}
+            {activeCategory === 'car-views' && (
+              carCatalog?.images2d?.length > 0 ? (
+                carCatalog.images2d.map((img) => (
+                  <div
+                    key={img.id}
+                    className="accessory-item"
+                    onClick={() => addCatalogImageToCanvas(img.url, img.label)}
+                    title={`Add ${img.label}`}
+                  >
+                    <div className="accessory-preview catalog-img-preview">
+                      <img src={img.url} alt={img.label} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                    </div>
+                    <span className="accessory-name">{img.label || img.angle}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="no-catalog-msg">No car images mapped for this model yet.</div>
+              )
+            )}
+
+            {/* Catalog Accessories (2D) */}
+            {activeCategory === 'catalog-acc' && (
+              carCatalog?.accessories?.filter((a) => a.image2dUrl && (a.accessoryType === '2d' || a.accessoryType === 'both')).length > 0 ? (
+                carCatalog.accessories
+                  .filter((a) => a.image2dUrl && (a.accessoryType === '2d' || a.accessoryType === 'both'))
+                  .map((acc) => (
+                    <div
+                      key={acc._id}
+                      className="accessory-item"
+                      onClick={() => addCatalogAccessoryToCanvas(acc)}
+                      title={`Add ${acc.name}`}
+                    >
+                      <div className="accessory-preview catalog-img-preview">
+                        {acc.thumbnailUrl
+                          ? <img src={acc.thumbnailUrl} alt={acc.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                          : <img src={acc.image2dUrl} alt={acc.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />}
+                      </div>
+                      <span className="accessory-name">{acc.name}</span>
+                    </div>
+                  ))
+              ) : (
+                <div className="no-catalog-msg">No 2D accessories mapped for this car yet.</div>
+              )
+            )}
+
+            {/* Built-in SVG Accessories grids */}
             {['stickers', 'spoilers', 'antennas', 'graphics'].includes(activeCategory) &&
               ACCESSORY_SVGS[activeCategory]?.map((item) => (
                 <div
@@ -552,7 +639,7 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
                     className={`btn ${isEditingText ? 'btn-success' : 'btn-primary'} add-text-btn`}
                     disabled={!customText.trim()}
                   >
-                    {isEditingText ? '✏️ Update Text' : '➕ Add Text'}
+                    {isEditingText ? <><PencilIcon size={14} /> Update Text</> : <><PlusIcon size={14} /> Add Text</>}
                   </button>
                 </div>
 
@@ -587,12 +674,12 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
                   className="btn btn-primary logo-upload-btn"
                   onClick={() => logoInputRef.current?.click()}
                 >
-                  📁 Choose Logo File
+                  <FolderIcon size={14} /> Choose Logo File
                 </button>
                 <div className="logo-tips">
-                  <p>✅ PNG with transparency works best</p>
-                  <p>✅ SVG files are supported</p>
-                  <p>✅ Resize with corner handles</p>
+                  <p><CheckIcon size={12} /> PNG with transparency works best</p>
+                  <p><CheckIcon size={12} /> SVG files are supported</p>
+                  <p><CheckIcon size={12} /> Resize with corner handles</p>
                 </div>
               </div>
             )}
@@ -602,10 +689,10 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
               <div className="draw-section">
                 <div className="draw-tools">
                   {[
-                    { id: 'pencil', label: '✏️ Pencil', title: 'Free draw' },
-                    { id: 'rect', label: '⬜ Rectangle', title: 'Draw rectangle' },
-                    { id: 'circle', label: '⭕ Ellipse', title: 'Draw ellipse' },
-                    { id: 'line', label: '➖ Line', title: 'Draw line' },
+                    { id: 'pencil', icon: <PencilIcon size={13} />, label: 'Pencil', title: 'Free draw' },
+                    { id: 'rect', icon: <SquareIcon size={13} />, label: 'Rectangle', title: 'Draw rectangle' },
+                    { id: 'circle', icon: <CircleIcon size={13} />, label: 'Ellipse', title: 'Draw ellipse' },
+                    { id: 'line', icon: <MinusIcon size={13} />, label: 'Line', title: 'Draw line' },
                   ].map((tool) => (
                     <button
                       key={tool.id}
@@ -613,12 +700,12 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
                       onClick={() => setDrawMode(drawMode === tool.id ? null : tool.id)}
                       title={tool.title}
                     >
-                      {tool.label}
+                      {tool.icon} {tool.label}
                     </button>
                   ))}
                   {drawMode && (
                     <button className="draw-tool-btn stop" onClick={stopDrawMode}>
-                      🔲 Stop Drawing
+                      <StopCircleIcon size={13} /> Stop Drawing
                     </button>
                   )}
                 </div>
@@ -673,9 +760,9 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
           </div>
 
           <div className="sidebar-instructions">
-            <p className="instruction-text">💡 Click accessory to add it</p>
-            <p className="instruction-text">🎯 Drag to move, corners to resize</p>
-            <p className="instruction-text">⌨️ Delete to remove, Ctrl+Z to undo</p>
+            <p className="instruction-text"><InfoIcon size={12} /> Click accessory to add it</p>
+            <p className="instruction-text"><MoveIcon size={12} /> Drag to move, corners to resize</p>
+            <p className="instruction-text"><KeyboardIcon size={12} /> Del to remove, Ctrl+Z to undo</p>
           </div>
         </>
       )}

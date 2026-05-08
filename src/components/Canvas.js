@@ -7,6 +7,7 @@ const MAX_HISTORY = 50;
 
 const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoReady }) => {
   const canvasRef = useRef(null);
+  const wrapperRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const canvasDisposedRef = useRef(false);
@@ -16,16 +17,17 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoRead
   const isRestoringRef = useRef(false);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-
+    // Measure from the outer wrapper's parent (.canvas-container), which fills
+    // the available viewport. The wrapper itself shrinks to content, so going
+    // one level up gives us the real available space.
     const updateCanvasSize = () => {
-      const container = canvasRef.current?.parentElement;
+      const container = wrapperRef.current?.parentElement;
       if (!container) return;
-      const maxWidth = container.clientWidth - 40;
-      const maxHeight = container.clientHeight - 40;
+      const maxWidth = container.clientWidth - 48;
+      const maxHeight = container.clientHeight - 48;
       setCanvasSize({
-        width: Math.min(maxWidth, 900),
-        height: Math.min(maxHeight, 650)
+        width: Math.max(400, Math.min(maxWidth, 1100)),
+        height: Math.max(300, Math.min(maxHeight, 750))
       });
     };
 
@@ -223,7 +225,7 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoRead
   }, [canvasSize, onSelection, onClearSelection, setFabricCanvas, onUndoRedoReady]);
 
   return (
-    <div className="canvas-wrapper">
+    <div className="canvas-wrapper" ref={wrapperRef}>
       <canvas ref={canvasRef} />
     </div>
   );

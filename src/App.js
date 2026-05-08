@@ -4,9 +4,9 @@ import ThreeCanvas from './components/ThreeCanvas';
 import Sidebar from './components/Sidebar';
 import AISidebar from './components/AISidebar';
 import Toolbar from './components/Toolbar';
-import Header from './components/Header';
 import CornerAd from './components/CornerAd';
 import ProjectLimitModal from './components/ProjectLimitModal';
+import { UploadIcon, DownloadIcon, ImageIcon, PencilIcon, CubeIcon, CarIcon } from './components/Icons';
 import './App.css';
 import axios from 'axios';
 
@@ -42,6 +42,7 @@ function App() {
   const projectImageLoadingRef = useRef(false);
 
   const [canvasMode, setCanvasMode] = useState('2d');
+  const [carCatalog, setCarCatalog] = useState(null);
 
   const [cornerAds, setCornerAds] = useState({
     'bottom-left': null,
@@ -177,6 +178,19 @@ function App() {
 
     if (projectLoading) loadProject();
   }, [projectLoading]);
+
+  // Fetch car catalog when project with car details is loaded
+  useEffect(() => {
+    if (!currentProject?.carDetails) return;
+    const { make, model } = currentProject.carDetails;
+    if (!make || !model) return;
+
+    const slug = `${make}-${model}`.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    fetch(`${API_BASE_URL}/api/car-catalog/${slug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.success) setCarCatalog(data.carCatalog); })
+      .catch(() => {});
+  }, [currentProject]);
 
   // Load base image when canvas and project are ready
   useEffect(() => {
@@ -402,8 +416,12 @@ function App() {
           multiplier: 2
         });
 
+        const filename = currentProject?.projectName
+          ? `${currentProject.projectName.toLowerCase().replace(/\s+/g, '-')}.${format}`
+          : `autovision-export.${format}`;
+
         const link = document.createElement('a');
-        link.download = `ridecraft-car.${format}`;
+        link.download = filename;
         link.href = dataURL;
         link.click();
 
@@ -421,8 +439,8 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-brand">
-            <span className="brand-icon">🚗</span>
-            <h1 className="app-title">RideCraft</h1>
+            <span className="brand-icon"><CarIcon size={26} /></span>
+            <h1 className="app-title">AutoVision Pro</h1>
             <span className="brand-tagline">Car Customization Studio</span>
           </div>
           <div className="header-actions">
@@ -436,14 +454,14 @@ function App() {
                 onClick={() => setCanvasMode('2d')}
                 title="2D Editor — draw, paint parts, add stickers"
               >
-                ✏️ 2D Edit
+                <PencilIcon size={14} /> 2D Edit
               </button>
               <button
                 className={`mode-btn ${canvasMode === '3d' ? 'active' : ''}`}
                 onClick={() => setCanvasMode('3d')}
                 title="3D Viewer — rotate and paint the 3D model"
               >
-                🧊 3D View
+                <CubeIcon size={14} /> 3D View
               </button>
             </div>
 
@@ -459,16 +477,16 @@ function App() {
               {imageUploading ? (
                 <><span className="spinner-small"></span> Uploading...</>
               ) : (
-                <><span>📷</span> Upload Car</>
+                <><UploadIcon size={15} /> Upload Car</>
               )}
             </label>
 
             <div className="export-group">
               <button onClick={() => handleExport('png')} className="btn btn-success">
-                💾 Export PNG
+                <DownloadIcon size={15} /> Export PNG
               </button>
               <button onClick={() => handleExport('jpeg')} className="btn btn-export-alt">
-                📤 JPG
+                <ImageIcon size={15} /> JPG
               </button>
             </div>
           </div>
@@ -477,25 +495,28 @@ function App() {
 
       {/* Main Content */}
       <div className="app-main">
-        {/* Left Sidebar */}
-        <Sidebar
-          fabricCanvas={fabricCanvas}
-          selectedObject={selectedObject}
-          onSelectCarPart={handleCarPartSelection}
-        />
+        {/* Left Sidebar — 2D mode only */}
+        {canvasMode === '2d' && (
+          <Sidebar
+            fabricCanvas={fabricCanvas}
+            selectedObject={selectedObject}
+            onSelectCarPart={handleCarPartSelection}
+            carCatalog={carCatalog}
+          />
+        )}
 
         {/* Canvas Area */}
         <div className="canvas-container">
           {!hasUploadedImage && canvasMode === '2d' && (
             <div className="welcome-overlay">
               <div className="welcome-card">
-                <div className="welcome-icon">🚗</div>
-                <h2 className="welcome-title">Welcome to RideCraft</h2>
+                <div className="welcome-icon"><CarIcon size={52} className="welcome-car-icon" /></div>
+                <h2 className="welcome-title">Welcome to AutoVision Pro</h2>
                 <p className="welcome-subtitle">
                   Upload your car photo to start customizing — paint parts, add stickers, logos, text and more.
                 </p>
                 <label htmlFor="image-upload" className="btn btn-primary welcome-upload-btn">
-                  📷 Upload Your Car Photo
+                  <UploadIcon size={16} /> Upload Your Car Photo
                 </label>
                 <p className="welcome-hint">or switch to <strong>3D View</strong> to explore 3D models</p>
               </div>
@@ -513,39 +534,43 @@ function App() {
             <ThreeCanvas
               onSelection={handleSelection}
               onClearSelection={handleClearSelection}
-              carTexture={currentProject?.baseImage}
+              carCatalog={carCatalog}
             />
           )}
         </div>
 
-        {/* Right Sidebar - AI Tools */}
-        <AISidebar
-          fabricCanvas={fabricCanvas}
-          selectedObject={selectedObject}
-          onSelectCarPart={handleCarPartSelection}
-        />
+        {/* Right Sidebar — 2D mode only */}
+        {canvasMode === '2d' && (
+          <AISidebar
+            fabricCanvas={fabricCanvas}
+            selectedObject={selectedObject}
+            onSelectCarPart={handleCarPartSelection}
+          />
+        )}
       </div>
 
-      {/* Toolbar */}
-      <Toolbar
-        selectedObject={selectedObject}
-        selectedCarPart={selectedCarPart}
-        onDeleteSelected={handleDeleteSelected}
-        onRotateLeft={handleRotateLeft}
-        onRotateRight={handleRotateRight}
-        onRotateZLeft={handleRotateZLeft}
-        onRotateZRight={handleRotateZRight}
-        onFlipH={handleFlipH}
-        onFlipV={handleFlipV}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetCanvas={handleResetCanvas}
-        canvasZoom={canvasZoom}
-        fabricCanvas={fabricCanvas}
-        canvasMode={canvasMode}
-      />
+      {/* Toolbar — 2D mode only */}
+      {canvasMode === '2d' && (
+        <Toolbar
+          selectedObject={selectedObject}
+          selectedCarPart={selectedCarPart}
+          onDeleteSelected={handleDeleteSelected}
+          onRotateLeft={handleRotateLeft}
+          onRotateRight={handleRotateRight}
+          onRotateZLeft={handleRotateZLeft}
+          onRotateZRight={handleRotateZRight}
+          onFlipH={handleFlipH}
+          onFlipV={handleFlipV}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetCanvas={handleResetCanvas}
+          canvasZoom={canvasZoom}
+          fabricCanvas={fabricCanvas}
+          canvasMode={canvasMode}
+        />
+      )}
 
       {/* Corner Ads */}
       <CornerAd position="bottom-left" ad={cornerAds['bottom-left']} />

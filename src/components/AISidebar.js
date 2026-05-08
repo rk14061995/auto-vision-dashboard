@@ -4,6 +4,7 @@ import BackgroundRemover from './BackgroundRemover';
 import LLMCarDetector from './LLMCarDetector';
 import AICarDetector from './AICarDetector';
 import MagicWandSelector from './MagicWandSelector';
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from './Icons';
 
 // Import fabric using the v5 method
 const { fabric } = require('fabric');
@@ -199,7 +200,7 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
           className="ai-sidebar-toggle"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          {isCollapsed ? '←' : '→'}
+          {isCollapsed ? <ChevronLeftIcon size={14} /> : <ChevronRightIcon size={14} />}
         </button>
       </div>
 
@@ -321,7 +322,7 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
                       onClick={() => removePart(p.id)}
                       title="Remove from list and canvas"
                     >
-                      ✕
+                      <XIcon size={12} />
                     </button>
                   </div>
                 ))}
