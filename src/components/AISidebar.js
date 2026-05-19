@@ -4,12 +4,13 @@ import BackgroundRemover from './BackgroundRemover';
 import LLMCarDetector from './LLMCarDetector';
 import AICarDetector from './AICarDetector';
 import MagicWandSelector from './MagicWandSelector';
+import AIColorTheme from './AIColorTheme';
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from './Icons';
 
 // Import fabric using the v5 method
 const { fabric } = require('fabric');
 
-const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
+const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, carMake, carModel }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [aiDetectedParts, setAiDetectedParts] = useState([]);
   const [backgroundRemoved, setBackgroundRemoved] = useState(false);
@@ -330,22 +331,35 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart }) => {
             )}
           </div>
 
+          {/* AI Style Palette — Hero Feature */}
+          {/* <AIColorTheme
+            fabricCanvas={fabricCanvas}
+            partsList={partsList}
+            userEmail={userEmail}
+            carMake={carMake}
+            carModel={carModel}
+          /> */}
+
+          {/* Claude AI Part Detector */}
+          {/* <LLMCarDetector
+            fabricCanvas={fabricCanvas}
+            onPartsDetected={setAiDetectedParts}
+            userEmail={userEmail}
+            carMake={carMake}
+            carModel={carModel}
+          /> */}
+
+          {/* Edge-Detection Part Detector (client-side, free) */}
+          {/* <AICarDetector
+            fabricCanvas={fabricCanvas}
+            onPartsDetected={setAiDetectedParts}
+          /> */}
+
           {/* Background Remover */}
-          {/* <BackgroundRemover 
+          {/* <BackgroundRemover
             fabricCanvas={fabricCanvas}
             onBackgroundRemoved={setBackgroundRemoved}
-          /> */}
-
-          {/* LLM Car Detector */}
-          {/* <LLMCarDetector 
-            fabricCanvas={fabricCanvas}
-            onPartsDetected={setAiDetectedParts}
-          /> */}
-
-          {/* AI Car Detector */}
-          {/* <AICarDetector 
-            fabricCanvas={fabricCanvas}
-            onPartsDetected={setAiDetectedParts}
+            userEmail={userEmail}
           /> */}
         </>
       )}

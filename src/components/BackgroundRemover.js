@@ -4,10 +4,13 @@ import './BackgroundRemover.css';
 // Import fabric using the v5 method
 const { fabric } = require('fabric');
 
-const BackgroundRemover = ({ fabricCanvas, onBackgroundRemoved }) => {
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000';
+
+const BackgroundRemover = ({ fabricCanvas, onBackgroundRemoved, userEmail }) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const [progress, setProgress] = useState(0);
   const [backgroundRemoved, setBackgroundRemoved] = useState(false);
+  const [creditError, setCreditError] = useState('');
 
   // Remove background from the uploaded image
   const removeBackground = async () => {
@@ -21,22 +24,17 @@ const BackgroundRemover = ({ fabricCanvas, onBackgroundRemoved }) => {
 
     setIsRemoving(true);
     setProgress(0);
+    setCreditError('');
 
     try {
       setProgress(20);
 
-      // Get image data for processing
-      const imageData = fabricCanvas.toDataURL({
-        format: 'png',
-        quality: 1.0,
-        multiplier: 1
-      });
+      const imageData = fabricCanvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 1 });
 
       setProgress(40);
 
-      // Call background removal API
       const removedImageData = await callBackgroundRemovalAPI(imageData);
-      
+
       setProgress(70);
 
       // Create new image with removed background
@@ -68,19 +66,31 @@ const BackgroundRemover = ({ fabricCanvas, onBackgroundRemoved }) => {
     }
   };
 
-  // Call background removal API (simulated for demo)
   const callBackgroundRemovalAPI = async (imageData) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // For demo purposes, we'll simulate background removal
-    // In production, you'd use actual APIs like:
-    // - remove.bg API
-    // - Adobe Creative Cloud API
-    // - Azure Computer Vision
-    // - Google Cloud Vision API
-    
-    return imageData; // Return original for demo
+    const res = await fetch(`${API_BASE_URL}/api/ai/remove-background`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(userEmail ? { Authorization: `Bearer ${userEmail}` } : {}),
+      },
+      body: JSON.stringify({ imageBase64: imageData }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 402) {
+        setCreditError(`Need ${data.creditsNeeded} credits (have ${data.balance}).`);
+        throw new Error('Insufficient credits');
+      }
+      if (res.status === 503) {
+        // remove.bg not configured — fall through to manual method
+        return imageData;
+      }
+      throw new Error(data.error || 'Background removal failed');
+    }
+
+    return data.resultBase64;
   };
 
   // Load image with removed background
@@ -188,6 +198,12 @@ const BackgroundRemover = ({ fabricCanvas, onBackgroundRemoved }) => {
           )}
         </div>
       </div>
+
+      {creditError && (
+        <div style={{ fontSize: '11px', color: '#f87171', background: 'rgba(248,113,113,0.08)', borderRadius: '6px', padding: '6px 8px', margin: '6px 0' }}>
+          {creditError}
+        </div>
+      )}
 
       {isRemoving && (
         <div className="removal-progress">

@@ -53,6 +53,10 @@ function App() {
   const undoFnRef = useRef(null);
   const redoFnRef = useRef(null);
 
+  // Auto-save
+  const autoSaveTimerRef = useRef(null);
+  const [saveStatus, setSaveStatus] = useState(''); // 'saving' | 'saved' | ''
+
   const handleSelection = useCallback((object) => {
     setSelectedObject(object);
   }, []);
@@ -433,6 +437,68 @@ function App() {
     }
   };
 
+  // Save canvas state to server
+  const saveCanvas = useCallback(async () => {
+    if (!currentProject?._id || !userEmail || !fabricCanvas || fabricCanvas.isDisposed) return;
+    setSaveStatus('saving');
+    try {
+      const canvasData = JSON.stringify(
+        fabricCanvas.toJSON(['carPartId', 'carPartName', 'aiDetected', 'llmDetected', 'customType', 'confidence', 'isSmallPart'])
+      );
+      await axios.put(
+        `${API_BASE_URL}/api/projects/${currentProject._id}`,
+        { canvasData },
+        { headers: { Authorization: `Bearer ${userEmail}` } }
+      );
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      setSaveStatus('');
+    }
+  }, [currentProject, userEmail, fabricCanvas]);
+
+  // Debounced auto-save — triggers 3s after last canvas change
+  const scheduleAutoSave = useCallback(() => {
+    if (!currentProject?._id || !userEmail) return;
+    clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(saveCanvas, 3000);
+  }, [saveCanvas, currentProject, userEmail]);
+
+  // Wire auto-save to canvas events
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    fabricCanvas.on('object:added', scheduleAutoSave);
+    fabricCanvas.on('object:modified', scheduleAutoSave);
+    fabricCanvas.on('object:removed', scheduleAutoSave);
+    return () => {
+      fabricCanvas.off('object:added', scheduleAutoSave);
+      fabricCanvas.off('object:modified', scheduleAutoSave);
+      fabricCanvas.off('object:removed', scheduleAutoSave);
+      clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [fabricCanvas, scheduleAutoSave]);
+
+  // Restore canvas overlay objects from saved canvasData after base image loads
+  useEffect(() => {
+    if (!currentProject?.canvasData || !fabricCanvas || canvasDisposedRef.current) return;
+    // Small delay to ensure background image is set first
+    const timer = setTimeout(() => {
+      if (!fabricCanvas || fabricCanvas.isDisposed || canvasDisposedRef.current) return;
+      try {
+        const saved = JSON.parse(currentProject.canvasData);
+        // loadFromJSON replaces everything — keep background by restoring after
+        const bgImage = fabricCanvas.backgroundImage;
+        fabricCanvas.loadFromJSON(saved, () => {
+          if (bgImage) fabricCanvas.setBackgroundImage(bgImage, fabricCanvas.renderAll.bind(fabricCanvas));
+          else fabricCanvas.renderAll();
+        });
+      } catch (e) {
+        // canvasData invalid — skip silently
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentProject?.canvasData, fabricCanvas]);
+
   return (
     <div className="app">
       {/* Header */}
@@ -446,6 +512,8 @@ function App() {
           <div className="header-actions">
             {error && <div className="error-message">{error}</div>}
             {successMessage && <div className="success-message">{successMessage}</div>}
+            {saveStatus === 'saving' && <div className="save-status saving">Saving…</div>}
+            {saveStatus === 'saved' && <div className="save-status saved">Saved</div>}
 
             {/* Canvas mode toggle */}
             <div className="canvas-mode-toggle">
@@ -545,6 +613,9 @@ function App() {
             fabricCanvas={fabricCanvas}
             selectedObject={selectedObject}
             onSelectCarPart={handleCarPartSelection}
+            userEmail={userEmail}
+            carMake={currentProject?.carDetails?.make}
+            carModel={currentProject?.carDetails?.model}
           />
         )}
       </div>

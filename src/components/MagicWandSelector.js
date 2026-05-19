@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './MagicWandSelector.css';
 
-// Import fabric using the v5 method
 const { fabric } = require('fabric');
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
+// Perceptual weighted RGB distance (Rec. 601 luma coefficients)
 const colorDistance = (r1, g1, b1, r2, g2, b2) => {
   const dr = r1 - r2;
   const dg = g1 - g2;
   const db = b1 - b2;
-  return Math.sqrt(dr * dr + dg * dg + db * db);
+  return Math.sqrt(0.299 * dr * dr + 0.587 * dg * dg + 0.114 * db * db);
 };
 
 const rdpSimplify = (points, epsilon) => {
@@ -64,21 +64,12 @@ const getBackgroundImageTransform = (canvas) => {
   const left = img.left || 0;
   const top = img.top || 0;
 
-  // In App.js we set originX/Y to center
   const imgCanvasW = img.width * scaleX;
   const imgCanvasH = img.height * scaleY;
   const imgLeft = left - imgCanvasW / 2;
   const imgTop = top - imgCanvasH / 2;
 
-  return {
-    img,
-    scaleX,
-    scaleY,
-    imgLeft,
-    imgTop,
-    imgCanvasW,
-    imgCanvasH,
-  };
+  return { img, scaleX, scaleY, imgLeft, imgTop, imgCanvasW, imgCanvasH };
 };
 
 const buildImageData = (htmlImageEl) => {
@@ -100,9 +91,7 @@ const findTopLeftBoundary = (mask, w, h) => {
       const up = y > 0 ? mask[idx - w] : false;
       const right = x < w - 1 ? mask[idx + 1] : false;
       const down = y < h - 1 ? mask[idx + w] : false;
-      if (!left || !up || !right || !down) {
-        return { x, y };
-      }
+      if (!left || !up || !right || !down) return { x, y };
     }
   }
   return null;
@@ -113,27 +102,19 @@ const traceContourMoore = (mask, w, h) => {
   if (!start) return [];
 
   const dirs = [
-    { x: 1, y: 0 },
-    { x: 1, y: 1 },
-    { x: 0, y: 1 },
-    { x: -1, y: 1 },
-    { x: -1, y: 0 },
-    { x: -1, y: -1 },
-    { x: 0, y: -1 },
-    { x: 1, y: -1 },
+    { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 },
+    { x: -1, y: 0 }, { x: -1, y: -1 }, { x: 0, y: -1 }, { x: 1, y: -1 },
   ];
 
   const isInside = (x, y) => x >= 0 && x < w && y >= 0 && y < h;
 
   let current = { ...start };
-  let backtrackDir = 4; // coming from left
+  let backtrackDir = 4;
   const contour = [{ x: current.x, y: current.y }];
-
   const maxSteps = w * h * 4;
   let steps = 0;
 
   while (steps++ < maxSteps) {
-    // Search neighbors starting from backtrackDir+1 (Moore neighborhood)
     let found = false;
     for (let i = 0; i < 8; i++) {
       const dirIndex = (backtrackDir + 1 + i) % 8;
@@ -141,7 +122,6 @@ const traceContourMoore = (mask, w, h) => {
       const ny = current.y + dirs[dirIndex].y;
       if (!isInside(nx, ny)) continue;
       if (mask[ny * w + nx]) {
-        // Next boundary point
         current = { x: nx, y: ny };
         contour.push({ x: current.x, y: current.y });
         backtrackDir = (dirIndex + 4) % 8;
@@ -151,10 +131,7 @@ const traceContourMoore = (mask, w, h) => {
     }
 
     if (!found) break;
-
-    if (current.x === start.x && current.y === start.y && contour.length > 10) {
-      break;
-    }
+    if (current.x === start.x && current.y === start.y && contour.length > 10) break;
   }
 
   return contour;
@@ -162,9 +139,10 @@ const traceContourMoore = (mask, w, h) => {
 
 const MagicWandSelector = ({ fabricCanvas }) => {
   const [enabled, setEnabled] = useState(false);
-  const [tolerance, setTolerance] = useState(28);
+  const [tolerance, setTolerance] = useState(25);
+  const [edgeThreshold, setEdgeThreshold] = useState(30);
   const [minPixels, setMinPixels] = useState(250);
-  const [simplify, setSimplify] = useState(2.5);
+  const [simplify, setSimplify] = useState(1.5);
   const [status, setStatus] = useState('');
 
   const cacheRef = useRef(null);
@@ -183,7 +161,6 @@ const MagicWandSelector = ({ fabricCanvas }) => {
         return;
       }
 
-      // Avoid selecting existing objects when wand is enabled
       fabricCanvas.discardActiveObject();
       fabricCanvas.requestRenderAll();
 
@@ -200,7 +177,6 @@ const MagicWandSelector = ({ fabricCanvas }) => {
       const ix = Math.floor(clamp(relX, 0, imgW - 1));
       const iy = Math.floor(clamp(relY, 0, imgH - 1));
 
-      // Build/cache image data
       const htmlEl = t.img.getElement();
       if (!htmlEl) {
         setStatus('Image not ready');
@@ -216,7 +192,6 @@ const MagicWandSelector = ({ fabricCanvas }) => {
       const { imageData, width, height } = cacheRef.current;
       const data = imageData.data;
 
-      // If our cached data dimensions differ from fabric image dimensions, map coordinates
       const mapX = Math.floor(ix * (width / imgW));
       const mapY = Math.floor(iy * (height / imgH));
 
@@ -232,11 +207,12 @@ const MagicWandSelector = ({ fabricCanvas }) => {
 
       setStatus('Selecting...');
 
-      // Flood fill
+      // Edge-aware flood fill
       const mask = new Uint8Array(width * height);
       const visited = new Uint8Array(width * height);
       const stack = [{ x: mapX, y: mapY }];
       const tol = tolerance;
+      const edgeStop = edgeThreshold;
 
       const idx1 = (x, y) => y * width + x;
 
@@ -255,13 +231,33 @@ const MagicWandSelector = ({ fabricCanvas }) => {
         const a = data[p + 3];
         if (a === 0) continue;
 
-        const d = colorDistance(r, g, b, sr, sg, sb);
-        if (d > tol) continue;
+        // Reject if too different from seed color
+        if (colorDistance(r, g, b, sr, sg, sb) > tol) continue;
+
+        // Edge stop: check local color gradient against image neighbors.
+        // If adjacent pixels show a sharp color jump, we're at a panel edge — stop here.
+        let localEdge = 0;
+        if (x > 0) {
+          const lp = (y * width + (x - 1)) * 4;
+          localEdge = Math.max(localEdge, colorDistance(r, g, b, data[lp], data[lp + 1], data[lp + 2]));
+        }
+        if (y > 0) {
+          const tp = ((y - 1) * width + x) * 4;
+          localEdge = Math.max(localEdge, colorDistance(r, g, b, data[tp], data[tp + 1], data[tp + 2]));
+        }
+        if (x < width - 1) {
+          const rp = (y * width + (x + 1)) * 4;
+          localEdge = Math.max(localEdge, colorDistance(r, g, b, data[rp], data[rp + 1], data[rp + 2]));
+        }
+        if (y < height - 1) {
+          const dp = ((y + 1) * width + x) * 4;
+          localEdge = Math.max(localEdge, colorDistance(r, g, b, data[dp], data[dp + 1], data[dp + 2]));
+        }
+        if (localEdge > edgeStop) continue;
 
         mask[mi] = 1;
         count++;
 
-        // 4-neighborhood
         stack.push({ x: x + 1, y });
         stack.push({ x: x - 1, y });
         stack.push({ x, y: y + 1 });
@@ -273,19 +269,15 @@ const MagicWandSelector = ({ fabricCanvas }) => {
         return;
       }
 
-      // Trace contour
       const contour = traceContourMoore(mask, width, height);
       if (!contour.length) {
         setStatus('No contour found');
         return;
       }
 
-      // Downsample contour a bit (performance)
-      const step = 2;
-      const sampled = contour.filter((_, i) => i % step === 0);
-      const simplified = rdpSimplify(sampled, simplify);
+      // Use full contour — RDP handles the simplification without prior downsampling
+      const simplified = rdpSimplify(contour, simplify);
 
-      // Convert to canvas points
       const points = simplified.map((pt) => {
         const imgX = (pt.x * imgW) / width;
         const imgY = (pt.y * imgH) / height;
@@ -295,7 +287,6 @@ const MagicWandSelector = ({ fabricCanvas }) => {
         };
       });
 
-      // Create overlay polygon
       const poly = new fabric.Polygon(points, {
         fill: 'rgba(59, 130, 246, 0.25)',
         stroke: '#3b82f6',
@@ -321,22 +312,14 @@ const MagicWandSelector = ({ fabricCanvas }) => {
       setStatus(`Selected region: ${count} px`);
     };
 
-    const attach = () => {
-      fabricCanvas.on('mouse:down', onMouseDown);
-    };
-
-    const detach = () => {
-      fabricCanvas.off('mouse:down', onMouseDown);
-    };
-
-    attach();
-    return detach;
-  }, [fabricCanvas, enabled, tolerance, minPixels, simplify]);
+    fabricCanvas.on('mouse:down', onMouseDown);
+    return () => fabricCanvas.off('mouse:down', onMouseDown);
+  }, [fabricCanvas, enabled, tolerance, edgeThreshold, minPixels, simplify]);
 
   return (
     <div className="magic-wand">
       <div className="magic-wand-header">
-        <h3 className="magic-wand-title">🪄 Smart Select</h3>
+        <h3 className="magic-wand-title">Smart Select</h3>
         <button
           className={`magic-wand-toggle ${enabled ? 'on' : 'off'}`}
           onClick={() => setEnabled((v) => !v)}
@@ -365,6 +348,17 @@ const MagicWandSelector = ({ fabricCanvas }) => {
             </div>
 
             <div className="mw-control">
+              <label className="mw-label">Edge threshold: {edgeThreshold}</label>
+              <input
+                type="range"
+                min="5"
+                max="80"
+                value={edgeThreshold}
+                onChange={(e) => setEdgeThreshold(parseInt(e.target.value, 10))}
+              />
+            </div>
+
+            <div className="mw-control">
               <label className="mw-label">Min area (px): {minPixels}</label>
               <input
                 type="range"
@@ -377,7 +371,7 @@ const MagicWandSelector = ({ fabricCanvas }) => {
             </div>
 
             <div className="mw-control">
-              <label className="mw-label">Simplify: {simplify.toFixed(1)}</label>
+              <label className="mw-label">Contour detail: {simplify.toFixed(1)}</label>
               <input
                 type="range"
                 min="0.5"
@@ -390,7 +384,7 @@ const MagicWandSelector = ({ fabricCanvas }) => {
           </div>
 
           <p className="magic-wand-hint">
-            Turn ON, then click any small part on the image to create a precise selectable region.
+            Turn ON, then click a panel on the car image. Lower edge threshold = tighter to panel boundaries.
           </p>
 
           {status && <p className="magic-wand-status">{status}</p>}

@@ -339,3 +339,22 @@
     justify-content: center;
   }
 }
+
+.save-status {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.save-status.saving {
+  color: #94a3b8;
+  background: rgba(148,163,184,0.1);
+  animation: pulse-opacity 1s infinite;
+}
+.save-status.saved {
+  color: #4ade80;
+  background: rgba(74,222,128,0.1);
+}
+@keyframes pulse-opacity {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}

@@ -470,11 +470,11 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) 
 
   return (
     <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <CarPartsSelector
+      {/* <CarPartsSelector
         fabricCanvas={fabricCanvas}
         selectedObject={selectedObject}
         onSelectPart={onSelectCarPart}
-      />
+      /> */}
 
       <div className="sidebar-header">
         <h3 className="sidebar-title">Customize</h3>
