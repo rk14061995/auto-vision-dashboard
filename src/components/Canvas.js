@@ -5,7 +5,7 @@ const { fabric } = require('fabric');
 
 const MAX_HISTORY = 50;
 
-const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoReady }) => {
+const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoReady, onZoomChange }) => {
   const canvasRef = useRef(null);
   const wrapperRef = useRef(null);
   const fabricCanvasRef = useRef(null);
@@ -39,14 +39,15 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoRead
   useEffect(() => {
     if (!canvasRef.current || canvasSize.width === 0) return;
 
-    // Dispose existing canvas
+    // If canvas already exists, resize it in-place — never recreate on resize
+    // because that would wipe the background image and all canvas objects.
     if (fabricCanvasRef.current) {
       try {
-        canvasDisposedRef.current = true;
-        fabricCanvasRef.current.clear();
-        fabricCanvasRef.current.dispose();
+        fabricCanvasRef.current.setWidth(canvasSize.width);
+        fabricCanvasRef.current.setHeight(canvasSize.height);
+        fabricCanvasRef.current.renderAll();
       } catch (e) {}
-      fabricCanvasRef.current = null;
+      return;
     }
 
     const handleKeyDown = (e) => {
@@ -188,7 +189,96 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoRead
       canvas.on('object:removed', () => saveState());
       canvas.on('object:modified', () => saveState());
 
-      document.addEventListener('keydown', handleKeyDown);
+      // ── Zoom & Pan ────────────────────────────────────────────────────────
+      // Ctrl+scroll → zoom to cursor; plain scroll → pan; Shift+scroll → pan X
+      canvas.on('mouse:wheel', (opt) => {
+        const e = opt.e;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.ctrlKey || e.metaKey) {
+          let zoom = canvas.getZoom() * (0.999 ** e.deltaY);
+          zoom = Math.max(0.1, Math.min(zoom, 10));
+          canvas.zoomToPoint({ x: e.offsetX, y: e.offsetY }, zoom);
+          if (onZoomChange) onZoomChange(zoom);
+        } else if (e.shiftKey) {
+          canvas.relativePan({ x: -e.deltaY, y: 0 });
+        } else {
+          canvas.relativePan({ x: -e.deltaX, y: -e.deltaY });
+        }
+      });
+
+      // Alt+drag, middle-mouse drag, or Space+drag → pan
+      const isPanningRef = { current: false };
+      const panStartRef = { current: { x: 0, y: 0 } };
+      const spaceDownRef = { current: false };
+
+      canvas.on('mouse:down', (opt) => {
+        const e = opt.e;
+        if (e.altKey || e.button === 1 || spaceDownRef.current) {
+          isPanningRef.current = true;
+          panStartRef.current = { x: e.clientX, y: e.clientY };
+          canvas.selection = false;
+          canvas.defaultCursor = 'grabbing';
+          canvas.hoverCursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+
+      canvas.on('mouse:move', (opt) => {
+        if (!isPanningRef.current) return;
+        const e = opt.e;
+        canvas.relativePan({
+          x: e.clientX - panStartRef.current.x,
+          y: e.clientY - panStartRef.current.y,
+        });
+        panStartRef.current = { x: e.clientX, y: e.clientY };
+      });
+
+      canvas.on('mouse:up', () => {
+        if (!isPanningRef.current) return;
+        isPanningRef.current = false;
+        if (!spaceDownRef.current) {
+          canvas.selection = true;
+          canvas.defaultCursor = 'default';
+          canvas.hoverCursor = 'move';
+        } else {
+          canvas.defaultCursor = 'grab';
+          canvas.hoverCursor = 'grab';
+        }
+      });
+
+      // Space bar → grab cursor + pan mode
+      const origHandleKeyDown = handleKeyDown;
+      const handleKeyDownWithSpace = (e) => {
+        if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName) && !e.target.isContentEditable) {
+          e.preventDefault();
+          spaceDownRef.current = true;
+          canvas.defaultCursor = 'grab';
+          canvas.hoverCursor = 'grab';
+          canvas.selection = false;
+          canvas.requestRenderAll();
+          return;
+        }
+        origHandleKeyDown(e);
+      };
+
+      const handleKeyUp = (e) => {
+        if (e.code === 'Space') {
+          spaceDownRef.current = false;
+          isPanningRef.current = false;
+          canvas.selection = true;
+          canvas.defaultCursor = 'default';
+          canvas.hoverCursor = 'move';
+          canvas.requestRenderAll();
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyDownWithSpace);
+      document.addEventListener('keyup', handleKeyUp);
+      // (handleKeyDown is replaced below; remove it from the cleanup too)
+      // store refs for cleanup
+      canvas._panKeyUp = handleKeyUp;
+      canvas._panKeyDown = handleKeyDownWithSpace;
 
       fabricCanvasRef.current = canvas;
       setFabricCanvas(canvas);
@@ -213,14 +303,25 @@ const Canvas = ({ setFabricCanvas, onSelection, onClearSelection, onUndoRedoRead
     return () => {
       clearTimeout(initTimer);
       document.removeEventListener('keydown', handleKeyDown);
+      const c0 = fabricCanvasRef.current;
+      if (c0?._panKeyDown) document.removeEventListener('keydown', c0._panKeyDown);
+      if (c0?._panKeyUp) document.removeEventListener('keyup', c0._panKeyUp);
       if (fabricCanvasRef.current) {
         try {
           canvasDisposedRef.current = true;
-          fabricCanvasRef.current.clear();
-          fabricCanvasRef.current.dispose();
+          const c = fabricCanvasRef.current;
+          fabricCanvasRef.current = null;
+          // Silence any in-flight requestAnimationFrame render callbacks
+          // that would crash after dispose nulls the canvas context.
+          c.renderAll = () => {};
+          c.requestRenderAll = () => {};
+          c.renderAndReset = () => {};
+          c.clear();
+          c.dispose();
         } catch (e) {}
-        fabricCanvasRef.current = null;
       }
+      // Clear parent state so no effects fire on the disposed canvas
+      setFabricCanvas(null);
     };
   }, [canvasSize, onSelection, onClearSelection, setFabricCanvas, onUndoRedoReady]);
 

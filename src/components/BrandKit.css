@@ -1,0 +1,253 @@
+.brand-kit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  overflow-y: auto;
+  background: #0f172a;
+  padding: 10px 12px 16px;
+}
+
+.bk-gate-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.86);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 20;
+  color: #f1f5f9;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.bk-gate-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bk-gate-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  max-width: 180px;
+}
+
+.bk-section {
+  margin-bottom: 20px;
+}
+
+.bk-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bk-slots {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Swatches */
+.bk-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+  min-height: 32px;
+}
+
+.bk-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid #334155;
+  position: relative;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.bk-swatch:hover {
+  transform: scale(1.15);
+  border-color: #3b82f6;
+}
+
+.bk-swatch-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+  padding: 0;
+}
+
+.bk-swatch:hover .bk-swatch-remove {
+  opacity: 1;
+}
+
+.bk-swatch-add {
+  border: 2px dashed #334155;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Add color row */
+.bk-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bk-color-picker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid #334155;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+}
+
+.bk-color-val {
+  font-size: 11px;
+  color: #64748b;
+  font-family: monospace;
+  flex: 1;
+}
+
+.bk-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.bk-add-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.bk-add-btn:disabled {
+  background: #1e293b;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+/* Font list */
+.bk-font-list {
+  list-style: none;
+  margin: 0 0 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bk-font-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e293b;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.bk-font-apply {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #f1f5f9;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  transition: color 0.1s;
+}
+
+.bk-font-apply:hover {
+  color: #3b82f6;
+}
+
+.bk-font-remove {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  transition: color 0.1s, background 0.1s;
+}
+
+.bk-font-remove:hover {
+  color: #fca5a5;
+  background: #7f1d1d;
+}
+
+/* Font add area */
+.bk-font-add {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.bk-font-select {
+  width: 100%;
+  padding: 7px 8px;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.bk-font-name-input {
+  width: 100%;
+  padding: 7px 8px;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bk-font-name-input:focus {
+  border-color: #3b82f6;
+}
+
+.bk-font-name-input::placeholder {
+  color: #475569;
+}

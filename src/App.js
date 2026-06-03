@@ -1,12 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Canvas from './components/Canvas';
 import ThreeCanvas from './components/ThreeCanvas';
-import Sidebar from './components/Sidebar';
-import AISidebar from './components/AISidebar';
+import UnifiedSidebar from './components/UnifiedSidebar';
 import Toolbar from './components/Toolbar';
 import CornerAd from './components/CornerAd';
 import ProjectLimitModal from './components/ProjectLimitModal';
-import { UploadIcon, DownloadIcon, ImageIcon, PencilIcon, CubeIcon, CarIcon } from './components/Icons';
+import { UploadIcon, DownloadIcon, ImageIcon, PencilIcon, CubeIcon, CarIcon, ShareIcon, XIcon } from './components/Icons';
 import './App.css';
 import axios from 'axios';
 
@@ -41,6 +40,9 @@ function App() {
   const canvasDisposedRef = useRef(false);
   const projectImageLoadingRef = useRef(false);
 
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareDataURL, setShareDataURL] = useState('');
+
   const [canvasMode, setCanvasMode] = useState('2d');
   const [carCatalog, setCarCatalog] = useState(null);
 
@@ -68,6 +70,8 @@ function App() {
   const handleCanvasSet = useCallback((canvas) => {
     if (canvas) {
       canvasDisposedRef.current = false;
+    } else {
+      canvasDisposedRef.current = true;
     }
     setFabricCanvas(canvas);
   }, []);
@@ -374,18 +378,20 @@ function App() {
 
   const handleZoomIn = () => {
     if (fabricCanvas && !fabricCanvas.isDisposed) {
-      const newZoom = Math.min(canvasZoom + 0.1, 3);
+      const newZoom = Math.min(fabricCanvas.getZoom() + 0.25, 10);
       setCanvasZoom(newZoom);
-      fabricCanvas.setZoom(newZoom);
+      const center = { x: fabricCanvas.getWidth() / 2, y: fabricCanvas.getHeight() / 2 };
+      fabricCanvas.zoomToPoint(center, newZoom);
       fabricCanvas.renderAll();
     }
   };
 
   const handleZoomOut = () => {
     if (fabricCanvas && !fabricCanvas.isDisposed) {
-      const newZoom = Math.max(canvasZoom - 0.1, 0.3);
+      const newZoom = Math.max(fabricCanvas.getZoom() - 0.25, 0.1);
       setCanvasZoom(newZoom);
-      fabricCanvas.setZoom(newZoom);
+      const center = { x: fabricCanvas.getWidth() / 2, y: fabricCanvas.getHeight() / 2 };
+      fabricCanvas.zoomToPoint(center, newZoom);
       fabricCanvas.renderAll();
     }
   };
@@ -393,7 +399,6 @@ function App() {
   const handleResetCanvas = () => {
     if (fabricCanvas && !fabricCanvas.isDisposed) {
       setCanvasZoom(1);
-      fabricCanvas.setZoom(1);
       fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
       fabricCanvas.renderAll();
     }
@@ -407,34 +412,113 @@ function App() {
     if (redoFnRef.current) redoFnRef.current();
   };
 
+  const EXPORT_MULTIPLIER = {
+    free: 1,
+    creator: 1.5,
+    pro: 3,
+    studio: 3,
+    enterprise: 4,
+    developer: 3,
+  };
+
+  const getExportLabel = (planType) => {
+    const m = EXPORT_MULTIPLIER[planType] || 1;
+    const baseW = fabricCanvas ? fabricCanvas.getWidth() : 800;
+    const px = Math.round(baseW * m);
+    if (px <= 720) return '720p';
+    if (px <= 1080) return '1080p';
+    if (px <= 2160) return '4K';
+    return `${px}px`;
+  };
+
   const handleExport = (format = 'png') => {
-    if (fabricCanvas && !fabricCanvas.isDisposed) {
-      try {
-        const currentZoom = fabricCanvas.getZoom();
-        fabricCanvas.setZoom(1);
-        fabricCanvas.renderAll();
+    if (!fabricCanvas || fabricCanvas.isDisposed) return;
+    try {
+      const planType = userLimits.planType || 'free';
+      const multiplier = EXPORT_MULTIPLIER[planType] || 1;
+      const currentZoom = fabricCanvas.getZoom();
+      fabricCanvas.setZoom(1);
+      fabricCanvas.renderAll();
 
-        const dataURL = fabricCanvas.toDataURL({
-          format,
-          quality: 1,
-          multiplier: 2
+      let watermarkObj = null;
+      if (planType === 'free') {
+        const { fabric: fabricLib } = require('fabric');
+        watermarkObj = new fabricLib.Text('AutoVision Pro', {
+          left: fabricCanvas.getWidth() - 10,
+          top: fabricCanvas.getHeight() - 10,
+          originX: 'right',
+          originY: 'bottom',
+          fontSize: 20,
+          fill: 'rgba(255,255,255,0.75)',
+          fontFamily: 'Arial',
+          selectable: false,
+          evented: false,
         });
-
-        const filename = currentProject?.projectName
-          ? `${currentProject.projectName.toLowerCase().replace(/\s+/g, '-')}.${format}`
-          : `autovision-export.${format}`;
-
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = dataURL;
-        link.click();
-
-        fabricCanvas.setZoom(currentZoom);
+        fabricCanvas.add(watermarkObj);
         fabricCanvas.renderAll();
-      } catch (err) {
-        console.error('Export error:', err);
       }
+
+      const dataURL = fabricCanvas.toDataURL({ format, quality: 1, multiplier });
+
+      if (watermarkObj) {
+        fabricCanvas.remove(watermarkObj);
+        fabricCanvas.renderAll();
+      }
+
+      const filename = currentProject?.projectName
+        ? `${currentProject.projectName.toLowerCase().replace(/\s+/g, '-')}.${format}`
+        : `autovision-export.${format}`;
+
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataURL;
+      link.click();
+
+      fabricCanvas.setZoom(currentZoom);
+      fabricCanvas.renderAll();
+    } catch (err) {
+      // Export error — silently skip
     }
+  };
+
+  const handleOpenShare = () => {
+    if (!fabricCanvas || fabricCanvas.isDisposed) return;
+    try {
+      const currentZoom = fabricCanvas.getZoom();
+      fabricCanvas.setZoom(1);
+      fabricCanvas.renderAll();
+      const dataURL = fabricCanvas.toDataURL({ format: 'png', multiplier: 1 });
+      fabricCanvas.setZoom(currentZoom);
+      fabricCanvas.renderAll();
+      setShareDataURL(dataURL);
+      setShowShareModal(true);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handleShareCopy = async () => {
+    if (!shareDataURL) return;
+    try {
+      const res = await fetch(shareDataURL);
+      const blob = await res.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
+      setSuccessMessage('Image copied to clipboard');
+      setTimeout(() => setSuccessMessage(''), 2500);
+    } catch (e) {
+      setError('Clipboard not available — use Download instead');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleShareDownload = () => {
+    if (!shareDataURL) return;
+    const link = document.createElement('a');
+    link.download = 'autovision-share.png';
+    link.href = shareDataURL;
+    link.click();
   };
 
   // Save canvas state to server
@@ -530,6 +614,7 @@ function App() {
                 title="3D Viewer — rotate and paint the 3D model"
               >
                 <CubeIcon size={14} /> 3D View
+                <span className="mode-btn-badge">Preview</span>
               </button>
             </div>
 
@@ -550,32 +635,59 @@ function App() {
             </label>
 
             <div className="export-group">
-              <button onClick={() => handleExport('png')} className="btn btn-success">
-                <DownloadIcon size={15} /> Export PNG
+              <button
+                onClick={() => handleExport('png')}
+                className="btn btn-success"
+                title={`Export PNG (${getExportLabel(userLimits.planType)})`}
+              >
+                <DownloadIcon size={15} /> Export PNG ({getExportLabel(userLimits.planType)})
               </button>
               <button onClick={() => handleExport('jpeg')} className="btn btn-export-alt">
                 <ImageIcon size={15} /> JPG
+              </button>
+              <button onClick={handleOpenShare} className="btn btn-share" title="Share canvas">
+                <ShareIcon size={15} /> Share
               </button>
             </div>
           </div>
         </div>
       </header>
 
+      {/* 3D coming-soon banner */}
+      {canvasMode === '3d' && (
+        <div className="coming-soon-bar">
+          <CubeIcon size={14} />
+          <span>
+            <strong>3D Customization Preview</strong> — You're exploring an early preview.
+            Full 3D customization with part-level painting, accessories &amp; more is <strong>coming soon</strong>.
+          </span>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="app-main">
-        {/* Left Sidebar — 2D mode only */}
+        {/* Unified Sidebar — 2D mode only */}
         {canvasMode === '2d' && (
-          <Sidebar
+          <UnifiedSidebar
             fabricCanvas={fabricCanvas}
             selectedObject={selectedObject}
             onSelectCarPart={handleCarPartSelection}
             carCatalog={carCatalog}
+            planType={userLimits.planType}
+            userEmail={userEmail}
+            carMake={currentProject?.carDetails?.make}
+            carModel={currentProject?.carDetails?.model}
           />
         )}
 
         {/* Canvas Area */}
         <div className="canvas-container">
           {!hasUploadedImage && canvasMode === '2d' && (
+            /* Backdrop dims only the canvas area */
+            <div className="welcome-backdrop" />
+          )}
+          {!hasUploadedImage && canvasMode === '2d' && (
+            /* Card is fixed so it centers on the full viewport, not just the canvas strip */
             <div className="welcome-overlay">
               <div className="welcome-card">
                 <div className="welcome-icon"><CarIcon size={52} className="welcome-car-icon" /></div>
@@ -597,6 +709,7 @@ function App() {
               onSelection={handleSelection}
               onClearSelection={handleClearSelection}
               onUndoRedoReady={handleUndoRedoReady}
+              onZoomChange={setCanvasZoom}
             />
           ) : (
             <ThreeCanvas
@@ -607,17 +720,6 @@ function App() {
           )}
         </div>
 
-        {/* Right Sidebar — 2D mode only */}
-        {canvasMode === '2d' && (
-          <AISidebar
-            fabricCanvas={fabricCanvas}
-            selectedObject={selectedObject}
-            onSelectCarPart={handleCarPartSelection}
-            userEmail={userEmail}
-            carMake={currentProject?.carDetails?.make}
-            carModel={currentProject?.carDetails?.model}
-          />
-        )}
       </div>
 
       {/* Toolbar — 2D mode only */}
@@ -654,6 +756,33 @@ function App() {
         userLimits={userLimits}
         onUpgrade={() => setShowLimitModal(false)}
       />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="share-modal-backdrop" onClick={() => setShowShareModal(false)}>
+          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="share-modal-header">
+              <span>Share Your Design</span>
+              <button className="share-modal-close" onClick={() => setShowShareModal(false)}>
+                <XIcon size={16} />
+              </button>
+            </div>
+            {shareDataURL && (
+              <img src={shareDataURL} alt="Canvas preview" className="share-preview" />
+            )}
+            <div className="share-modal-actions">
+              {typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem && (
+                <button className="btn btn-primary" onClick={handleShareCopy}>
+                  Copy Image
+                </button>
+              )}
+              <button className="btn btn-success" onClick={handleShareDownload}>
+                <DownloadIcon size={14} /> Download PNG
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

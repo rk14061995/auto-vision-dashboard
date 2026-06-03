@@ -5,12 +5,13 @@ import LLMCarDetector from './LLMCarDetector';
 import AICarDetector from './AICarDetector';
 import MagicWandSelector from './MagicWandSelector';
 import AIColorTheme from './AIColorTheme';
+import VersionHistory from './VersionHistory';
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from './Icons';
 
 // Import fabric using the v5 method
 const { fabric } = require('fabric');
 
-const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, carMake, carModel }) => {
+const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, carMake, carModel, planType }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [aiDetectedParts, setAiDetectedParts] = useState([]);
   const [backgroundRemoved, setBackgroundRemoved] = useState(false);
@@ -18,6 +19,7 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, c
   const [defaultCategory, setDefaultCategory] = useState('Uncategorized');
   const [categoryColors, setCategoryColors] = useState({});
   const [applyToCategory, setApplyToCategory] = useState(true);
+  const [partColors, setPartColors] = useState({});
 
   const categories = useMemo(
     () => [
@@ -123,6 +125,18 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, c
       fabricCanvas.remove(toRemove);
       fabricCanvas.requestRenderAll();
     }
+  };
+
+  const paintPart = (id, color) => {
+    setPartColors((prev) => ({ ...prev, [id]: color }));
+    if (!fabricCanvas) return;
+    const obj = fabricCanvas.getObjects().find((o) => o && o.carPartId === id);
+    if (!obj) return;
+    obj.set({ fill: color + '50', stroke: color, strokeWidth: 2 });
+    fabricCanvas.requestRenderAll();
+    window.dispatchEvent(new CustomEvent('carPartColorChanged', {
+      detail: { carPartId: id, type: 'fill', color },
+    }));
   };
 
   const selectPart = (id) => {
@@ -281,52 +295,65 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, c
 
             {partsList.length === 0 ? (
               <div className="ai-parts-empty">
-                Select a region, then it will appear here. Click an item to re-select and paint.
+                <div className="ai-parts-how">
+                  <div className="ai-how-step"><span className="ai-how-num">1</span>Turn Smart Select <strong>ON</strong></div>
+                  <div className="ai-how-step"><span className="ai-how-num">2</span>Click a panel on the car</div>
+                  <div className="ai-how-step"><span className="ai-how-num">3</span>Pick a color below to paint it</div>
+                </div>
               </div>
             ) : (
               <div className="ai-parts-list">
-                {partsList.map((p) => (
-                  <div
-                    key={p.id}
-                    className={`ai-part-item ${selectedObject?.carPartId === p.id ? 'active' : ''}`}
-                  >
-                    <button
-                      className="ai-part-main"
-                      onClick={() => selectPart(p.id)}
-                      title="Click to select this part on canvas"
+                {partsList.map((p) => {
+                  const color = partColors[p.id] || '#3b82f6';
+                  return (
+                    <div
+                      key={p.id}
+                      className={`ai-part-item ${selectedObject?.carPartId === p.id ? 'active' : ''}`}
                     >
-                      <div className="ai-part-name">{p.name}</div>
-                      <div className="ai-part-id">{p.category}</div>
-                    </button>
+                      <button
+                        className="ai-part-main"
+                        onClick={() => selectPart(p.id)}
+                        title="Click to select on canvas"
+                      >
+                        <div className="ai-part-name">{p.name}</div>
+                      </button>
 
-                    <select
-                      className="ai-part-category"
-                      value={p.category}
-                      onChange={(e) => {
-                        setPartsList((prev) =>
-                          prev.map((x) =>
-                            x.id === p.id ? { ...x, category: e.target.value } : x
+                      {/* Inline color swatch — click to pick and immediately paint */}
+                      <label className="ai-part-color-label" title="Paint this part">
+                        <input
+                          type="color"
+                          value={color}
+                          className="ai-part-color-input"
+                          onChange={(e) => paintPart(p.id, e.target.value)}
+                        />
+                        <span className="ai-part-color-dot" style={{ background: color }} />
+                      </label>
+
+                      <select
+                        className="ai-part-category"
+                        value={p.category}
+                        onChange={(e) =>
+                          setPartsList((prev) =>
+                            prev.map((x) => x.id === p.id ? { ...x, category: e.target.value } : x)
                           )
-                        );
-                      }}
-                      title="Assign this part to a group (Doors, Hood, etc.)"
-                    >
-                      {categories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                        }
+                        title="Assign category"
+                      >
+                        {categories.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
 
-                    <button
-                      className="ai-part-remove"
-                      onClick={() => removePart(p.id)}
-                      title="Remove from list and canvas"
-                    >
-                      <XIcon size={12} />
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        className="ai-part-remove"
+                        onClick={() => removePart(p.id)}
+                        title="Remove"
+                      >
+                        <XIcon size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -361,6 +388,13 @@ const AISidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, userEmail, c
             onBackgroundRemoved={setBackgroundRemoved}
             userEmail={userEmail}
           /> */}
+
+          {/* Version History */}
+          <VersionHistory
+            fabricCanvas={fabricCanvas}
+            userEmail={userEmail}
+            planType={planType}
+          />
         </>
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './MagicWandSelector.css';
 
 const { fabric } = require('fabric');
@@ -147,9 +147,42 @@ const MagicWandSelector = ({ fabricCanvas }) => {
 
   const cacheRef = useRef(null);
 
-  const canUse = useMemo(() => {
-    return Boolean(fabricCanvas && fabricCanvas.backgroundImage);
+  // Lock / unlock all AI-detected polygon overlays when the toggle changes.
+  // When OFF → parts are locked in place (no accidental drag/resize).
+  // When ON  → parts are fully interactive so the user can reposition them.
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    fabricCanvas.getObjects().forEach((obj) => {
+      if (!obj.aiDetected && !obj.llmDetected) return;
+      obj.set({
+        lockMovementX: !enabled,
+        lockMovementY: !enabled,
+        lockScalingX: !enabled,
+        lockScalingY: !enabled,
+        lockRotation: !enabled,
+        hasControls: enabled,
+        hasBorders: enabled,
+      });
+    });
+    if (!enabled) fabricCanvas.discardActiveObject();
+    fabricCanvas.requestRenderAll();
+  }, [enabled, fabricCanvas]);
+
+  // useMemo([fabricCanvas]) won't re-run when backgroundImage is set on the same
+  // canvas instance. Track it via a state that re-checks on every canvas render.
+  const [hasBackground, setHasBackground] = useState(
+    () => Boolean(fabricCanvas?.backgroundImage)
+  );
+
+  useEffect(() => {
+    if (!fabricCanvas) { setHasBackground(false); return; }
+    setHasBackground(Boolean(fabricCanvas.backgroundImage));
+    const check = () => setHasBackground(Boolean(fabricCanvas.backgroundImage));
+    fabricCanvas.on('after:render', check);
+    return () => fabricCanvas.off('after:render', check);
   }, [fabricCanvas]);
+
+  const canUse = hasBackground;
 
   useEffect(() => {
     if (!fabricCanvas) return;

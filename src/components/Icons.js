@@ -271,9 +271,69 @@ export const ChevronRightIcon = (p) => (
   <Icon {...p}><polyline points="9 18 15 12 9 6" /></Icon>
 );
 
+export const ChevronUpIcon = (p) => (
+  <Icon {...p}><polyline points="18 15 12 9 6 15" /></Icon>
+);
+
+export const ChevronDownIcon = (p) => (
+  <Icon {...p}><polyline points="6 9 12 15 18 9" /></Icon>
+);
+
 export const XIcon = (p) => (
   <Icon {...p}>
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
+  </Icon>
+);
+
+export const EyeIcon = (p) => (
+  <Icon {...p}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </Icon>
+);
+
+export const EyeOffIcon = (p) => (
+  <Icon {...p}>
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </Icon>
+);
+
+export const LockIcon = (p) => (
+  <Icon {...p}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Icon>
+);
+
+export const ShareIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </Icon>
+);
+
+export const ClockIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </Icon>
+);
+
+export const BrushIcon = (p) => (
+  <Icon {...p}>
+    <path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.07" />
+    <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1 1 2.48 1.02 3.5 1.02 2.2 0 3-1.8 3-3.02 0-1.67-1.33-3.04-1.5-3.04z" />
+  </Icon>
+);
+
+export const StarIcon = (p) => (
+  <Icon {...p}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </Icon>
 );

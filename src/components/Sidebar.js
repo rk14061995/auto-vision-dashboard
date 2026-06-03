@@ -1,11 +1,14 @@
 import React, { useState, useRef } from 'react';
 import './Sidebar.css';
 import CarPartsSelector from './CarPartsSelector';
+import LayersPanel from './LayersPanel';
+import BrandKit from './BrandKit';
 import {
   PaletteIcon, FlagIcon, RadioIcon, SparkleIcon, TypeIcon,
   ImageIcon, PencilIcon, PlusIcon, FolderIcon, CheckIcon,
   StopCircleIcon, SquareIcon, CircleIcon, MinusIcon, InfoIcon,
-  MoveIcon, KeyboardIcon, ChevronLeftIcon, ChevronRightIcon, CarIcon
+  MoveIcon, KeyboardIcon, ChevronLeftIcon, ChevronRightIcon, CarIcon,
+  LockIcon, BrushIcon
 } from './Icons';
 
 const { fabric } = require('fabric');
@@ -23,7 +26,7 @@ const ACCESSORY_SVGS = {
       </svg>`
     },
     {
-      id: 'spoiler2', name: 'GT Wing',
+      id: 'spoiler2', name: 'GT Wing', premium: true,
       svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" width="160" height="50">
         <path d="M10 30 Q80 5 150 30" stroke="#dc2626" stroke-width="6" fill="none" stroke-linecap="round"/>
         <rect x="30" y="28" width="6" height="18" rx="2" fill="#dc2626"/>
@@ -31,7 +34,7 @@ const ACCESSORY_SVGS = {
       </svg>`
     },
     {
-      id: 'spoiler3', name: 'Racing Spoiler',
+      id: 'spoiler3', name: 'Racing Spoiler', premium: true,
       svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 45" width="150" height="45">
         <rect x="5" y="15" width="140" height="10" rx="5" fill="#0f172a"/>
         <rect x="5" y="23" width="140" height="4" rx="2" fill="#3b82f6"/>
@@ -125,14 +128,14 @@ const ACCESSORY_SVGS = {
       </svg>`
     },
     {
-      id: 'graphic3', name: 'Racing #1',
+      id: 'graphic3', name: 'Racing #1', premium: true,
       svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
         <circle cx="30" cy="30" r="28" fill="#dc2626" stroke="white" stroke-width="3"/>
         <text x="30" y="42" text-anchor="middle" font-family="Arial Black" font-size="32" font-weight="900" fill="white">1</text>
       </svg>`
     },
     {
-      id: 'graphic4', name: 'Racing #99',
+      id: 'graphic4', name: 'Racing #99', premium: true,
       svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60" width="80" height="60">
         <rect width="80" height="60" rx="8" fill="#1e293b"/>
         <text x="40" y="44" text-anchor="middle" font-family="Arial Black" font-size="32" font-weight="900" fill="#fbbf24">99</text>
@@ -146,7 +149,7 @@ const fontOptions = [
   'Impact', 'Trebuchet MS', 'Courier New', 'Palatino', 'Comic Sans MS'
 ];
 
-const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) => {
+const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog, planType }) => {
   const [activeCategory, setActiveCategory] = useState('stickers');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isEditingText, setIsEditingText] = useState(false);
@@ -466,6 +469,8 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) 
     { id: 'text', name: 'Text', icon: <TypeIcon size={14} /> },
     { id: 'logo', name: 'Logo', icon: <ImageIcon size={14} /> },
     { id: 'draw', name: 'Draw', icon: <PencilIcon size={14} /> },
+    { id: 'layers', name: 'Layers', icon: <SquareIcon size={14} /> },
+    { id: 'brand-kit', name: 'Brand Kit', icon: <BrushIcon size={14} /> },
   ];
 
   return (
@@ -550,109 +555,109 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) 
 
             {/* Built-in SVG Accessories grids */}
             {['stickers', 'spoilers', 'antennas', 'graphics'].includes(activeCategory) &&
-              ACCESSORY_SVGS[activeCategory]?.map((item) => (
-                <div
-                  key={item.id}
-                  className="accessory-item"
-                  onClick={() => addAccessoryToCanvas(item)}
-                  title={`Add ${item.name}`}
-                >
+              ACCESSORY_SVGS[activeCategory]?.map((item) => {
+                const isLocked = item.premium && planType === 'free';
+                return (
                   <div
-                    className="accessory-preview"
-                    dangerouslySetInnerHTML={{ __html: item.svg }}
-                  />
-                  <span className="accessory-name">{item.name}</span>
-                </div>
-              ))}
+                    key={item.id}
+                    className={`accessory-item${isLocked ? ' accessory-locked' : ''}`}
+                    onClick={() => !isLocked && addAccessoryToCanvas(item)}
+                    title={isLocked ? 'Upgrade to Creator to unlock' : `Add ${item.name}`}
+                  >
+                    <div
+                      className="accessory-preview"
+                      dangerouslySetInnerHTML={{ __html: item.svg }}
+                    />
+                    <span className="accessory-name">{item.name}</span>
+                    {isLocked && (
+                      <div className="accessory-lock-overlay">
+                        <LockIcon size={14} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
             {/* Text tool */}
             {activeCategory === 'text' && (
               <div className="text-input-section">
-                <div className="text-input-container">
-                  <textarea
-                    value={customText}
-                    onChange={(e) => {
-                      setCustomText(e.target.value);
-                      updateTextProp('text', e.target.value);
-                    }}
-                    placeholder={isEditingText ? 'Edit text...' : 'Type your text...'}
-                    className="text-input"
-                    rows={2}
-                  />
+                {/* Live-preview textarea */}
+                <textarea
+                  value={customText}
+                  onChange={(e) => { setCustomText(e.target.value); updateTextProp('text', e.target.value); }}
+                  placeholder={isEditingText ? 'Edit text…' : 'Type your text…'}
+                  className="text-input"
+                  rows={2}
+                  style={{
+                    fontFamily: selectedFont,
+                    fontWeight: textBold ? 'bold' : 'normal',
+                    color: textColor,
+                    fontSize: Math.min(fontSize, 22) + 'px',
+                  }}
+                />
 
-                  <div className="text-controls">
-                    <div className="control-group">
-                      <label className="control-label">Font</label>
-                      <select
-                        value={selectedFont}
-                        onChange={(e) => { setSelectedFont(e.target.value); updateTextProp('fontFamily', e.target.value); }}
-                        className="font-select"
-                      >
-                        {fontOptions.map((f) => <option key={f} value={f}>{f}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="control-group">
-                      <label className="control-label">Size: {fontSize}px</label>
-                      <input
-                        type="range" min="12" max="120" value={fontSize}
-                        onChange={(e) => { const v = parseInt(e.target.value); setFontSize(v); updateTextProp('fontSize', v); }}
-                        className="size-slider"
-                      />
-                    </div>
-
-                    <div className="control-group">
-                      <label className="control-label">Color</label>
-                      <div className="color-control">
-                        <input type="color" value={textColor}
-                          onChange={(e) => { setTextColor(e.target.value); updateTextProp('fill', e.target.value); }}
-                          className="color-picker"
-                        />
-                        <span className="color-value">{textColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="control-group toggle-row">
-                      <label className="control-label">
-                        <input type="checkbox" checked={textBold}
-                          onChange={(e) => { setTextBold(e.target.checked); updateTextProp('fontWeight', e.target.checked ? 'bold' : 'normal'); }}
-                        /> Bold
-                      </label>
-                      <label className="control-label">
-                        <input type="checkbox" checked={textShadow}
-                          onChange={(e) => {
-                            setTextShadow(e.target.checked);
-                            if (isEditingText && selectedObject?.type === 'text') {
-                              selectedObject.set('shadow', e.target.checked
-                                ? new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 6, offsetX: 2, offsetY: 2 })
-                                : null);
-                              fabricCanvas?.renderAll();
-                            }
-                          }}
-                        /> Shadow
-                      </label>
-                    </div>
+                {/* Font + size row */}
+                <div className="txt-row">
+                  <select
+                    value={selectedFont}
+                    onChange={(e) => { setSelectedFont(e.target.value); updateTextProp('fontFamily', e.target.value); }}
+                    className="txt-font-select"
+                  >
+                    {fontOptions.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <div className="txt-size-stepper">
+                    <button className="txt-step-btn" onClick={() => { const v = Math.max(12, fontSize - 2); setFontSize(v); updateTextProp('fontSize', v); }}>−</button>
+                    <span className="txt-size-val">{fontSize}</span>
+                    <button className="txt-step-btn" onClick={() => { const v = Math.min(120, fontSize + 2); setFontSize(v); updateTextProp('fontSize', v); }}>+</button>
                   </div>
+                </div>
 
+                {/* Formatting bar: color + bold + shadow */}
+                <div className="txt-format-bar">
+                  <label className="txt-color-swatch" title="Text color">
+                    <input type="color" value={textColor}
+                      onChange={(e) => { setTextColor(e.target.value); updateTextProp('fill', e.target.value); }}
+                      className="txt-color-input"
+                    />
+                    <span className="txt-color-dot" style={{ background: textColor }} />
+                    <span className="txt-color-hex">{textColor}</span>
+                  </label>
+                  <div className="txt-toggles">
+                    <button
+                      className={`txt-toggle-btn ${textBold ? 'active' : ''}`}
+                      title="Bold"
+                      onClick={() => { const v = !textBold; setTextBold(v); updateTextProp('fontWeight', v ? 'bold' : 'normal'); }}
+                    ><b>B</b></button>
+                    <button
+                      className={`txt-toggle-btn ${textShadow ? 'active' : ''}`}
+                      title="Shadow"
+                      onClick={() => {
+                        const v = !textShadow;
+                        setTextShadow(v);
+                        if (isEditingText && selectedObject?.type === 'text') {
+                          selectedObject.set('shadow', v ? new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 6, offsetX: 2, offsetY: 2 }) : null);
+                          fabricCanvas?.renderAll();
+                        }
+                      }}
+                    >S</button>
+                  </div>
                   <button
                     onClick={addTextToCanvas}
-                    className={`btn ${isEditingText ? 'btn-success' : 'btn-primary'} add-text-btn`}
+                    className={`txt-add-btn ${isEditingText ? 'update' : ''}`}
                     disabled={!customText.trim()}
                   >
-                    {isEditingText ? <><PencilIcon size={14} /> Update Text</> : <><PlusIcon size={14} /> Add Text</>}
+                    {isEditingText ? <><PencilIcon size={11} /> Update</> : <><PlusIcon size={11} /> Add</>}
                   </button>
                 </div>
 
-                <div className="text-examples">
-                  <p className="example-title">Quick examples:</p>
-                  <div className="example-buttons">
-                    {['RACING', 'SPORT', 'TURBO', 'CUSTOM', '2025', 'DRIFT'].map((ex) => (
-                      <button key={ex} className="example-btn"
-                        onClick={() => { setCustomText(ex); setTimeout(addTextToCanvas, 50); }}>
-                        {ex}
-                      </button>
-                    ))}
-                  </div>
+                {/* Quick chips */}
+                <div className="txt-chips">
+                  {['RACING', 'SPORT', 'TURBO', 'CUSTOM', '2025', 'DRIFT'].map((ex) => (
+                    <button key={ex} className="txt-chip"
+                      onClick={() => { setCustomText(ex); setTimeout(addTextToCanvas, 50); }}>
+                      {ex}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -681,6 +686,25 @@ const Sidebar = ({ fabricCanvas, selectedObject, onSelectCarPart, carCatalog }) 
                   <p><CheckIcon size={12} /> SVG files are supported</p>
                   <p><CheckIcon size={12} /> Resize with corner handles</p>
                 </div>
+              </div>
+            )}
+
+            {/* Layers Panel */}
+            {activeCategory === 'layers' && (
+              <div className="layers-tab-wrapper">
+                <LayersPanel fabricCanvas={fabricCanvas} />
+              </div>
+            )}
+
+            {/* Brand Kit */}
+            {activeCategory === 'brand-kit' && (
+              <div className="brand-kit-tab-wrapper">
+                <BrandKit
+                  fabricCanvas={fabricCanvas}
+                  selectedObject={selectedObject}
+                  planType={planType}
+                  userEmail={undefined}
+                />
               </div>
             )}
 

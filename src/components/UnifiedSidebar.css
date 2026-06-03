@@ -1,0 +1,75 @@
+.unified-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ── Tab bar ── */
+.unified-tabs {
+  display: flex;
+  flex-shrink: 0;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.unified-tab-btn {
+  flex: 1;
+  padding: 11px 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.unified-tab-btn.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: white;
+}
+
+.unified-tab-btn:hover:not(.active) {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+/* ── Panel wrapper ── */
+.unified-panel {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Reset Sidebar inside unified panel ── */
+.unified-panel .sidebar {
+  width: 100% !important;
+  border-right: none !important;
+  flex: 1;
+  height: auto;
+}
+
+/* ── Reset AISidebar from position:fixed to normal flow ── */
+.unified-panel .ai-sidebar {
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100%;
+  box-shadow: none !important;
+  border-left: none !important;
+  z-index: auto !important;
+  flex: 1;
+}

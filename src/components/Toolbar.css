@@ -228,6 +228,129 @@
   text-align: right;
 }
 
+/* ── Shortcuts Panel ── */
+.toolbar-shortcuts-wrap {
+  position: relative;
+}
+
+.shortcuts-btn {
+  border-radius: 50% !important;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  font-weight: 700;
+}
+
+.shortcuts-btn.active,
+.shortcuts-btn:hover {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+  color: white !important;
+}
+
+.shortcuts-btn-label {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.shortcuts-panel {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  right: 0;
+  width: 340px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+  z-index: 2000;
+  animation: shortcutsFadeIn 0.15s ease;
+}
+
+@keyframes shortcutsFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.shortcuts-panel-header {
+  padding: 10px 14px;
+  background: #1e40af;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.shortcuts-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 10px;
+}
+
+.shortcuts-group {
+  padding: 6px 8px;
+}
+
+.shortcuts-group:nth-child(odd) {
+  border-right: 1px solid #f1f5f9;
+}
+
+.shortcuts-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  margin-bottom: 5px;
+}
+
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  gap: 8px;
+}
+
+.shortcut-label {
+  font-size: 11px;
+  color: #374151;
+  flex: 1;
+  min-width: 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.key-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.key-sep {
+  font-size: 9px;
+  color: #94a3b8;
+  padding: 0 1px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .toolbar {

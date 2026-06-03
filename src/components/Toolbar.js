@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Toolbar.css';
 import {
   UndoIcon, RedoIcon, TrashIcon, RotateCCWIcon, RotateCWIcon,
@@ -29,6 +29,58 @@ const Toolbar = ({
   const [fillColor, setFillColor] = useState('#3b82f6');
   const [strokeColor, setStrokeColor] = useState('#1e293b');
   const [opacity, setOpacity] = useState(100);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const shortcutsRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (shortcutsRef.current && !shortcutsRef.current.contains(e.target)) {
+        setShowShortcuts(false);
+      }
+    };
+    if (showShortcuts) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showShortcuts]);
+
+  const SHORTCUTS = [
+    {
+      group: 'Navigate',
+      items: [
+        { keys: ['Ctrl', 'Scroll'], label: 'Zoom in / out' },
+        { keys: ['Scroll'], label: 'Pan vertically' },
+        { keys: ['Shift', 'Scroll'], label: 'Pan horizontally' },
+      ],
+    },
+    {
+      group: 'Pan',
+      items: [
+        { keys: ['Space', 'Drag'], label: 'Pan canvas' },
+        { keys: ['Alt', 'Drag'], label: 'Pan canvas' },
+        { keys: ['Middle Mouse'], label: 'Pan canvas' },
+      ],
+    },
+    {
+      group: 'History',
+      items: [
+        { keys: ['Ctrl', 'Z'], label: 'Undo' },
+        { keys: ['Ctrl', 'Y'], label: 'Redo' },
+      ],
+    },
+    {
+      group: 'Selection',
+      items: [
+        { keys: ['Ctrl', 'A'], label: 'Select all' },
+        { keys: ['Del'], label: 'Delete selected' },
+      ],
+    },
+    {
+      group: 'Edit',
+      items: [
+        { keys: ['Ctrl', 'C'], label: 'Copy' },
+        { keys: ['Ctrl', 'V'], label: 'Paste' },
+      ],
+    },
+  ];
 
   // Sync toolbar values when selected object changes
   React.useEffect(() => {
@@ -226,6 +278,43 @@ const Toolbar = ({
             <span className="no-selection">Nothing selected</span>
           )}
         </div>
+      </div>
+
+      {/* Shortcuts toggle */}
+      <div className="toolbar-shortcuts-wrap" ref={shortcutsRef}>
+        <button
+          className={`btn-icon shortcuts-btn ${showShortcuts ? 'active' : ''}`}
+          onClick={() => setShowShortcuts((s) => !s)}
+          title="Keyboard shortcuts"
+        >
+          <span className="shortcuts-btn-label">?</span>
+        </button>
+
+        {showShortcuts && (
+          <div className="shortcuts-panel">
+            <div className="shortcuts-panel-header">Keyboard Shortcuts</div>
+            <div className="shortcuts-groups">
+              {SHORTCUTS.map((g) => (
+                <div key={g.group} className="shortcuts-group">
+                  <div className="shortcuts-group-title">{g.group}</div>
+                  {g.items.map((item, i) => (
+                    <div key={i} className="shortcut-row">
+                      <span className="shortcut-label">{item.label}</span>
+                      <span className="shortcut-keys">
+                        {item.keys.map((k, ki) => (
+                          <React.Fragment key={k}>
+                            {ki > 0 && <span className="key-sep">+</span>}
+                            <kbd className="key-chip">{k}</kbd>
+                          </React.Fragment>
+                        ))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
